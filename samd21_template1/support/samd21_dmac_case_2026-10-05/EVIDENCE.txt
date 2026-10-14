@@ -1,0 +1,140 @@
+OBSERVED DMAC CONTEXT/WRITEBACK MISMATCHES
+These values were reported from the original firmware's debugger session.
+They are transcribed evidence, not newly measured by the packaging script.
+Screenshots supplied in the conversation are not embedded in this archive.
+
+CASE A: ADC ch6 / SPI TX ch4 / SPI RX ch5
+ADC uses two linked descriptors at LVL3; SPI uses one-shot blocks at LVL1/LVL2.
+A run using per-block SPI channel SWRST stopped after 4 h 32 min.
+
+Field       ch4 source         ch4 writeback
+BTCTRL      0x0409             0x0909
+BTCNT       0x0800             0x000F
+SRCADDR     0x20000D50         0x4200401A
+DSTADDR     0x42001C28         0x20001100
+DESCADDR    0x00000000         0x200010D0
+
+0x0909 is VALID | DSTINC | BEATSIZE_HWORD | BLOCKACT_INT.
+0x4200401A is ADC RESULT. 0x200010D0 is the second ADC descriptor.
+The ch4 writeback tuple matches the ADC transfer, not the ch4 source descriptor.
+Both SPI software busy flags were 1. ADC TERR counter was 0.
+SPI INTFLAG=0x83 (DRE | TXC | ERROR), STATUS=0x0004 (BUFOVF).
+This particular snapshot had no ch4/ch5 FERR and no pending DMA interrupt.
+Other earlier snapshots showed FERR; those are distinct observations and
+must not be treated as the same instantaneous state as this descriptor tuple.
+
+CASE B: ADC ch1 / SPI TX ch4 / SPI RX ch5, SPI SWRST REMOVED
+ADC numbering changed to comply with the published 1.7.2 workaround.
+ADC readings/completion processing stopped after approximately 4-5 hours,
+while the TFT and RTC/LCD continued. No automatic failure breakpoint was
+reported for this ADC-only stall; the MCU was manually halted for inspection.
+
+Field       ADC ch1 source     ADC ch1 writeback
+BTCTRL      0x0909             0x0409
+BTCNT       0x0010             0x07FF
+SRCADDR     0x4200401A         0x20000D50
+DSTADDR     0x20001100         0x42001C28
+DESCADDR    0x200010D0         0x00000000
+
+Second ADC source descriptor:
+BTCTRL=0x0909, BTCNT=16, SRCADDR=0x4200401A,
+DSTADDR=0x20001120, DESCADDR=0x20000F60 (ADC ch1 first descriptor).
+
+The ch1 writeback tuple is SPI TX-like: byte transfer, incrementing source,
+SERCOM5 DATA destination, no next descriptor, 2047 bytes remaining.
+The time at which this tuple was first written is not known.
+
+DIRECT RAM CONFIRMATION
+DMAC.BASEADDR=0x20000F50; DMAC.WRBADDR=0x20001010.
+Descriptor size=16 bytes; ch1 WRB address=0x20001010+16=0x20001020.
+The raw Memory window independently showed these first twelve bytes there:
+09 04 FF 07 50 0D 00 20 28 1C 00 42
+Little-endian decode: BTCTRL=0x0409, BTCNT=0x07FF,
+SRCADDR=0x20000D50, DSTADDR=0x42001C28.
+DESCADDR=0 was read in the expanded typed Watch structure.
+
+KNOWN SRAM LAYOUT IN THESE OBSERVED BUILDS
+color_chunk:               0x20000550, 2048 bytes
+descriptor_section:        0x20000F50, 192 bytes
+writeback_section:         0x20001010, 192 bytes
+adc_ping_pong_descriptor:  0x200010D0, 16 bytes
+adc_dma_buffers:           0x200010E0, 64 bytes
+The descriptor/writeback/link areas are 16-byte aligned and nonoverlapping.
+ADC buffer end addresses are 0x20001100 and 0x20001120.
+0x20000D50 is the TFT source END address, not a mistaken source-buffer base.
+These addresses belong to historical inspected builds; do not assume that
+addresses remain unchanged in another ELF or after further code changes.
+
+CHANNEL/ADC STATE DURING CH1 FAILURE
+ch1 CHCTRLA=0x02 (enabled)
+ch1 CHCTRLB=0x00802760 (LVL3, ADC RESRDY trigger 39, BEAT)
+ch1 CHINTENSET=0x03 (TCMPL and TERR enabled)
+ch1 CHINTFLAG=0x00
+ch1 CHSTATUS=0x00
+SPI ch4 CHCTRLB=0x00800C20; ch5 CHCTRLB=0x00800B40.
+DMAC CTRL=0x0F02; DBGCTRL=0; PRICTRL0=0 in the supplied I/O screenshots.
+ADC CTRLA=0x02; EVCTRL=0x01; INTFLAG=0x0B; STATUS=0.
+ADC INTFLAG 0x0B = RESRDY | OVERRUN | SYNCRDY.
+TC3 COUNT16 CTRLA=0x0022; EVCTRL=0x1000; INTFLAG=0x39.
+ADC TERR counter remained 0. SPI/overall DMA error flag was 0 in case B.
+One earlier ch1 failure had adc_dma_block_count frozen at 0x00028273 across
+multiple run/halt checks while the TFT chunk counter increased.
+The later no-SWRST case reported adc_dma_block_count=0x00114BFA.
+
+Debug-halt caveat: DBGCTRL=0 means DMAC does not run normally while halted.
+Pending SPI requests and ADC overrun seen during inspection do not by
+themselves identify the cause or prove that TFT was also stalled.
+Zero TFT deep-snapshot fields with stall_snapshot_valid=0 are uninitialized
+snapshots, not live channel values. Case B descriptor evidence came from
+BASEADDR/WRBADDR and direct SRAM, not these zero snapshots.
+
+KNOWN-FAILING SPI SEQUENCE BEFORE THE INCLUDED CURRENT SOURCE
+Even after SWRST was removed, the following operations remained per chunk:
+1. Save PRIMASK and disable CPU interrupts.
+2. Select ch5; CHCTRLA=0; wait for ENABLE=0; clear TCMPL/TERR.
+3. Select ch4; CHCTRLA=0; wait for ENABLE=0; clear TCMPL/TERR.
+4. Build RX and TX source descriptors; execute DMB.
+5. Arm ch5: select ch5; CHCTRLA=0 again; set CHINTENSET=3;
+   set CHCTRLB=0x00800B40; CHCTRLA=ENABLE; set dma_ch5_busy=1.
+6. Arm ch4: select ch4; CHCTRLA=0 again; set CHINTENSET=3;
+   set CHCTRLB=0x00800C20; CHCTRLA=ENABLE; set dma_ch4_busy=1.
+7. Restore saved PRIMASK.
+The earlier reset-enabled variant additionally set/waited CHCTRLA.SWRST
+after each ENABLE=0 wait in steps 2 and 3.
+
+CURRENT INCLUDED SOURCE: CONTROLLED FOLLOW-UP, NOT A PROVEN FIX
+The reset/prepare helper and all normal SPI CHCTRLA=0 writes were removed.
+Flag clearing, descriptor values, DMB, PRIMASK, RX-first enable order and
+ADC ch1 linked ping-pong were retained. See dma.cpp for the exact code.
+No failure-free long-duration result for this version is claimed here.
+Error-path SPI disables and automatic ADC TERR rebuilding/rearming remain.
+The zero ADC TERR counter is evidence against that recovery branch having
+executed in the reported ADC-only stall; it is not proof against every cause.
+
+RELATION TO ERRATUM 1.7.2
+Case A matches its lower-numbered-enable condition: SPI ch4/ch5 < ADC ch6.
+Case B follows its numbering workaround: SPI ch4/ch5 > linked ADC ch1.
+In both captured failures, an upper channel's recognizable transfer context
+was found in a lower channel's writeback slot. This is an observation across
+these cases, not a claim that every channel combination fails this way.
+The evidence does not yet establish whether 1.7.2 is incomplete, a separate
+silicon issue is involved, or some software operation triggers the mismatch.
+It also does not prove the exact point of corruption or identify its writer.
+
+NOT YET TESTED / NOT CLAIMED
+- All three channels on the same LVL priority.
+- ADC single-shot software-rearmed blocks instead of linked descriptors.
+- A standalone minimal reproducer or a DMA-authorship trace.
+- A confirmed fix for the original continuous ADC + SPI DMA combination.
+- A causal explanation for every earlier HardFault or ADC/TFT freeze.
+
+RELATED PUBLIC REPORTS
+https://stackoverflow.com/questions/62833342/atmel-samd21-dmac-writeback-failure
+Continuous linked ch0 receives SPI ch2/ch3 context in WRB despite numbering
+workaround. No posted answer; later author comment says he stopped using
+the device. This is independently similar behavior, not an official erratum.
+
+https://stackoverflow.com/questions/33750367/atmel-samd21-dma-abort-issue
+Reports wrong-channel writeback during abort. Suggested IRQ critical section
+is already present in the local paired SPI launcher; no applicable proven
+fix is established from this report.

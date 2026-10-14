@@ -1,0 +1,142 @@
+MINIMAL ACTIVE SOURCE EXCERPTS
+Device: ATSAMD21J18A
+Purpose: show the active unlinked ADC/TCC0/EVSYS/DMAC path used in the stall test.
+These are selected excerpts transcribed from the project sources, not a standalone
+or independently buildable reproducer. File paths are relative to the project root.
+
+1. ADC CLOCK, CONFIGURATION AND START EVENT
+Source: src/hpl/adc/adc_init.cpp
+
+    GCLK->CLKCTRL.reg =
+        GCLK_CLKCTRL_ID_ADC |
+        GCLK_CLKCTRL_GEN_GCLK0 |
+        GCLK_CLKCTRL_CLKEN;
+    while (GCLK->STATUS.bit.SYNCBUSY);
+
+    ADC->CTRLB.reg = ADC_CTRLB_RESSEL_12BIT |
+        ADC_CTRLB_PRESCALER_DIV32;
+
+    ADC->INPUTCTRL.reg = ADC_INPUTCTRL_MUXPOS_PIN0 |
+        (0x18 << ADC_INPUTCTRL_MUXNEG_Pos) |
+        ADC_INPUTCTRL_GAIN_DIV2;
+
+    ADC->EVCTRL.reg = ADC_EVCTRL_STARTEI;
+
+GCLK0 is configured from DFLL48M in Device_Startup/system_samd21.c.
+The selected ADC clock is therefore nominally 48 MHz / 32 = 1.5 MHz.
+
+2. TCC0 EVENT RATE
+Source: src/hpl/timer/tcc0.cpp
+
+    GCLK->CLKCTRL.reg =
+        GCLK_CLKCTRL_ID_TCC0_TCC1 |
+        GCLK_CLKCTRL_GEN_GCLK4 |
+        GCLK_CLKCTRL_CLKEN;
+    ...
+    TCC0->CTRLA.reg = TCC_CTRLA_PRESCALER_DIV1;
+    TCC0->WAVE.reg = TCC_WAVE_WAVEGEN_NPWM;
+    ...
+    TCC0->PER.reg = 999;
+    TCC0->CC[0].reg = 499;
+    ...
+    TCC0->EVCTRL.reg = TCC_EVCTRL_MCEO0;
+    TCC0->INTENCLR.reg = TCC_INTENCLR_MC0;
+    TCC0->INTFLAG.reg = TCC_INTFLAG_MC0;
+    TCC0->CTRLA.bit.ENABLE = 1;
+
+GCLK4 is nominally DFLL48M / 6 = 8 MHz. With PER=999, single-slope
+TCC0 produces one MC0 compare event per 1000 timer clocks (nominal 8 kHz).
+
+3. ASYNCHRONOUS EVENT ROUTE
+Source: src/hal/evsys/evsys.cpp
+
+void evsys_route_tcc0_to_adc(void)
+{
+    evsys_channel_configure(EVSYS_TCC0_ADC_CHANNEL,
+        EVSYS_ID_GEN_TCC0_MCX_0,
+        EVSYS_CHANNEL_PATH_ASYNCHRONOUS);
+    evsys_user_configure(EVSYS_ID_USER_ADC_START,
+        EVSYS_TCC0_ADC_CHANNEL);
+}
+
+The current evsys_init() calls evsys_route_tcc0_to_adc(); the former
+TC3-to-ADC route call is commented out.
+
+4. UNLINKED ADC DMA DESCRIPTOR AND TRIGGER
+Source: src/hal/dma/dma.cpp
+Constants from include/hal/dma/dma.h:
+    #define ADC_DMA_CHANNEL 1
+    #define ADC_DMA_BUFFER_SAMPLES 16
+
+Descriptor builder:
+
+void dmac_build_channel6_adc_ping_pong(void)
+{
+    const uint16_t btctrl = DMAC_BTCTRL_VALID |
+        DMAC_BTCTRL_DSTINC |
+        DMAC_BTCTRL_BEATSIZE_HWORD |
+        DMAC_BTCTRL_BLOCKACT_INT;
+
+    descriptor_section[ADC_DMA_CHANNEL].btctrl = 0;
+    descriptor_section[ADC_DMA_CHANNEL].btcnt = ADC_DMA_BUFFER_SAMPLES;
+    descriptor_section[ADC_DMA_CHANNEL].srcaddr = (uint32_t)&ADC->RESULT.reg;
+    descriptor_section[ADC_DMA_CHANNEL].dstaddr =
+        (uint32_t)&adc_dma_buffers[adc_completed_buffer][ADC_DMA_BUFFER_SAMPLES];
+    descriptor_section[ADC_DMA_CHANNEL].descaddr = 0;
+    descriptor_section[ADC_DMA_CHANNEL].btctrl = btctrl;
+    __DMB();
+}
+
+Channel setup:
+
+void dmac_arm_channel6_adc_trigger(void)
+{
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+
+    DMAC->CHID.reg = DMAC_CHID_ID(ADC_DMA_CHANNEL);
+    DMAC->CHCTRLA.reg = 0;
+    DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR;
+    DMAC->CHCTRLB.reg = DMAC_CHCTRLB_LVL(3) |
+        DMAC_CHCTRLB_TRIGACT_BEAT |
+        DMAC_CHCTRLB_TRIGSRC(ADC_DMAC_ID_RESRDY);
+    DMAC->CHCTRLA.reg = DMAC_CHCTRLA_ENABLE;
+
+    __set_PRIMASK(primask);
+}
+
+Block-complete handling (error path omitted here):
+
+if (flags & DMAC_CHINTFLAG_TCMPL) {
+    const uint8_t completed_buffer = adc_completed_buffer;
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
+    adc_completed_buffer ^= 1;
+    dmac_build_channel6_adc_ping_pong();
+    DMAC->CHID.reg = DMAC_CHID_ID(ADC_DMA_CHANNEL);
+    DMAC->CHCTRLA.reg = DMAC_CHCTRLA_ENABLE;
+    __set_PRIMASK(primask);
+    adc_dma_samples_complete(adc_dma_buffers[completed_buffer],
+        ADC_DMA_BUFFER_SAMPLES);
+    adc_dma_block_count++;
+}
+
+Despite legacy function names containing "channel6" and "ping_pong", this
+configuration selects ADC channel 1, has DESCADDR=0, and uses software A/B
+buffer alternation. There is no linked ADC descriptor in this test.
+
+5. TFT DRAW LOOP DISABLED FOR THE CURRENT RUN
+Source: src/app/app_run.cpp
+
+void app_run(void)
+{
+    // app2();
+    tft_dma_debug_guard();
+#if USE_ADC && USE_DMA
+    adc_dma_debug_guard();
+#endif
+}
+
+The TFT driver and SERCOM5 are still initialized at startup. The continuous
+app2() drawing workload, which starts TFT DMA channels 4/5, was not called.
+The guard only checks state; it does not start a TFT DMA transfer.

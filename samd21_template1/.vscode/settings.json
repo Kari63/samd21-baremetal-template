@@ -1,0 +1,14 @@
+{
+  "VsCodeTaskButtons.tasks": [
+    {
+      "label": "$(tools) Build",
+      "task": "SAMD21: Build Debug",
+      "tooltip": "Build SAMD21 Debug"
+    },
+    {
+      "label": "$(zap) Build + Flash",
+      "task": "SAMD21: Flash Debug",
+      "tooltip": "Build and flash SAMD21"
+    }
+  ]
+}

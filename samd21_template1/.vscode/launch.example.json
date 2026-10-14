@@ -1,0 +1,50 @@
+{
+    "configurations": [
+        {
+            "name": "Debug SAMD21 (EDBG)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}\\Debug\\samd21_template1.elf",
+            "cwd": "${workspaceFolder}",
+            "MIMode": "gdb",
+            "targetArchitecture": "arm",
+            "miDebuggerPath": "C:\\Program Files (x86)\\Atmel\\Studio\\7.0\\toolchain\\arm\\arm-gnu-toolchain\\bin\\arm-none-eabi-gdb.exe",
+            "debugServerPath": "${env:USERPROFILE}\\AppData\\Local\\Microsoft\\WinGet\\Packages\\xpack-dev-tools.openocd-xpack_Microsoft.Winget.Source_8wekyb3d8bbwe\\xpack-openocd-0.12.0-7\\bin\\openocd.exe",
+            "debugServerArgs": "-f interface/cmsis-dap.cfg -c \"transport select swd\" -f target/at91samdXX.cfg -c \"adapter speed 500\"",
+            "serverStarted": "Listening on port 3333 for gdb connections",
+            "filterStderr": true,
+            "stopAtEntry": true,
+            "preLaunchTask": "SAMD21: Build Debug",
+            "customLaunchSetupCommands": [
+                {
+                    "description": "Load firmware symbols into GDB",
+                    "text": "file \"C:/path/to/samd21_template1/samd21_template1/Debug/samd21_template1.elf\"",
+                    
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Connect GDB to OpenOCD",
+                    "text": "target extended-remote localhost:3333",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Reset and halt the target before programming",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Program the current ELF into flash",
+                    "text": "load",
+                    "ignoreFailures": false
+                },
+                {
+                    "description": "Halt after programming so breakpoints can be installed",
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                }
+            ],
+            "launchCompleteCommand": "exec-continue"
+        }
+    ],
+    "version": "2.0.0"
+}

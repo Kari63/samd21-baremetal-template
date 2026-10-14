@@ -1,0 +1,722 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+  <PropertyGroup>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectVersion>7.0</ProjectVersion>
+    <ToolchainName>com.Atmel.ARMGCC.CPP</ToolchainName>
+    <ProjectGuid>dce6c7e3-ee26-4d79-826b-08594b9ad897</ProjectGuid>
+    <avrdevice>ATSAMD21J18A</avrdevice>
+    <avrdeviceseries>none</avrdeviceseries>
+    <OutputType>Executable</OutputType>
+    <Language>CPP</Language>
+    <OutputFileName>$(MSBuildProjectName)</OutputFileName>
+    <OutputFileExtension>.elf</OutputFileExtension>
+    <OutputDirectory>$(MSBuildProjectDirectory)\$(Configuration)</OutputDirectory>
+    <AssemblyName>samd21_template1</AssemblyName>
+    <Name>samd21_template1</Name>
+    <RootNamespace>samd21_template1</RootNamespace>
+    <ToolchainFlavour>Native</ToolchainFlavour>
+    <KeepTimersRunning>true</KeepTimersRunning>
+    <OverrideVtor>false</OverrideVtor>
+    <CacheFlash>true</CacheFlash>
+    <ProgFlashFromRam>true</ProgFlashFromRam>
+    <RamSnippetAddress>0x20000000</RamSnippetAddress>
+    <UncachedRange />
+    <preserveEEPROM>true</preserveEEPROM>
+    <OverrideVtorValue>exception_table</OverrideVtorValue>
+    <BootSegment>2</BootSegment>
+    <ResetRule>0</ResetRule>
+    <eraseonlaunchrule>0</eraseonlaunchrule>
+    <EraseKey />
+    <avrtool>com.atmel.avrdbg.tool.edbg</avrtool>
+    <avrtoolserialnumber>ATML2130062700000156</avrtoolserialnumber>
+    <avrdeviceexpectedsignature>0x10010300</avrdeviceexpectedsignature>
+    <avrtoolinterface>SWD</avrtoolinterface>
+    <com_atmel_avrdbg_tool_edbg>
+      <ToolOptions>
+        <InterfaceProperties>
+          <SwdClock>2000000</SwdClock>
+        </InterfaceProperties>
+        <InterfaceName>SWD</InterfaceName>
+      </ToolOptions>
+      <ToolType>com.atmel.avrdbg.tool.edbg</ToolType>
+      <ToolNumber>ATML2130062700000156</ToolNumber>
+      <ToolName>EDBG MSD</ToolName>
+    </com_atmel_avrdbg_tool_edbg>
+    <avrtoolinterfaceclock>2000000</avrtoolinterfaceclock>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <ToolchainSettings>
+      <ArmGccCpp>
+        <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+        <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+        <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+        <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+        <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+        <armgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>NDEBUG</Value>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </armgcc.compiler.symbols.DefSymbols>
+        <armgcc.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcc.compiler.directories.IncludePaths>
+        <armgcc.compiler.optimization.level>Optimize for size (-Os)</armgcc.compiler.optimization.level>
+        <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+        <armgcccpp.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>NDEBUG</Value>
+            <Value>NDEBUG</Value>
+          </ListValues>
+        </armgcccpp.compiler.symbols.DefSymbols>
+        <armgcccpp.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+            <Value>../include/examples/support</Value>
+            <Value>../include</Value>
+            <Value>../include/hpl</Value>
+            <Value>../include/hpl/adc</Value>
+            <Value>../include/hpl/extif</Value>
+            <Value>../include/hpl/gpio</Value>
+            <Value>../include/hpl/sercom</Value>
+            <Value>../include/hpl/timer</Value>
+            <Value>../include/hal</Value>
+            <Value>../include/hal/adc</Value>
+            <Value>../include/hal/devif</Value>
+            <Value>../include/hal/mem</Value>
+            <Value>../include/hal/evsys</Value>
+            <Value>../include/hal/timer</Value>
+            <Value>../include/hal/usart</Value>
+            <Value>../include/hal/dma</Value>
+            <Value>../include/drivers</Value>
+            <Value>../include/drivers/dht20</Value>
+            <Value>../include/drivers/drv8833</Value>
+            <Value>../include/drivers/lcd</Value>
+            <Value>../include/drivers/tft</Value>
+            <Value>../include/core</Value>
+            <Value>../include/core/formatter</Value>
+            <Value>../include/core/scheduler</Value>
+            <Value>../include/core/system_commands</Value>
+            <Value>../include/api</Value>
+            <Value>../include/callbacks</Value>
+            <Value>../include/math</Value>
+            <Value>../include/app</Value>
+            <Value>../include/examples</Value>
+          </ListValues>
+        </armgcccpp.compiler.directories.IncludePaths>
+        <armgcccpp.compiler.optimization.level>Optimize for size (-Os)</armgcccpp.compiler.optimization.level>
+        <armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <armgcccpp.compiler.warnings.AllWarnings>True</armgcccpp.compiler.warnings.AllWarnings>
+        <armgcccpp.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </armgcccpp.linker.libraries.Libraries>
+        <armgcccpp.linker.libraries.LibrarySearchPaths>
+          <ListValues>
+            <Value>%24(ProjectDir)\Device_Startup</Value>
+          </ListValues>
+        </armgcccpp.linker.libraries.LibrarySearchPaths>
+        <armgcccpp.linker.optimization.GarbageCollectUnusedSections>True</armgcccpp.linker.optimization.GarbageCollectUnusedSections>
+        <armgcccpp.linker.memorysettings.ExternalRAM />
+        <armgcccpp.linker.miscellaneous.LinkerFlags>-Tsamd21j18a_flash.ld</armgcccpp.linker.miscellaneous.LinkerFlags>
+        <armgcccpp.assembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcccpp.assembler.general.IncludePaths>
+        <armgcccpp.preprocessingassembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcccpp.preprocessingassembler.general.IncludePaths>
+      </ArmGccCpp>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <ToolchainSettings>
+      <ArmGccCpp>
+        <armgcc.common.outputfiles.hex>True</armgcc.common.outputfiles.hex>
+        <armgcc.common.outputfiles.lss>True</armgcc.common.outputfiles.lss>
+        <armgcc.common.outputfiles.eep>True</armgcc.common.outputfiles.eep>
+        <armgcc.common.outputfiles.bin>True</armgcc.common.outputfiles.bin>
+        <armgcc.common.outputfiles.srec>True</armgcc.common.outputfiles.srec>
+        <armgcc.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>DEBUG</Value>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </armgcc.compiler.symbols.DefSymbols>
+        <armgcc.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcc.compiler.directories.IncludePaths>
+        <armgcc.compiler.optimization.level>Optimize debugging experience (-Og)</armgcc.compiler.optimization.level>
+        <armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcc.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <armgcc.compiler.optimization.DebugLevel>Maximum (-g3)</armgcc.compiler.optimization.DebugLevel>
+        <armgcc.compiler.warnings.AllWarnings>True</armgcc.compiler.warnings.AllWarnings>
+        <armgcccpp.compiler.symbols.DefSymbols>
+          <ListValues>
+            <Value>DEBUG</Value>
+            <Value>DEBUG</Value>
+          </ListValues>
+        </armgcccpp.compiler.symbols.DefSymbols>
+        <armgcccpp.compiler.directories.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+            <Value>../include</Value>
+            <Value>../include/hpl</Value>
+            <Value>../include/hpl/adc</Value>
+            <Value>../include/hpl/extif</Value>
+            <Value>../include/hpl/gpio</Value>
+            <Value>../include/hpl/sercom</Value>
+            <Value>../include/hpl/timer</Value>
+            <Value>../include/hal</Value>
+            <Value>../include/hal/adc</Value>
+            <Value>../include/hal/devif</Value>
+            <Value>../include/hal/mem</Value>
+            <Value>../include/hal/evsys</Value>
+            <Value>../include/hal/timer</Value>
+            <Value>../include/hal/usart</Value>
+            <Value>../include/hal/dma</Value>
+            <Value>../include/drivers</Value>
+            <Value>../include/drivers/dht20</Value>
+            <Value>../include/drivers/drv8833</Value>
+            <Value>../include/drivers/lcd</Value>
+            <Value>../include/drivers/tft</Value>
+            <Value>../include/core</Value>
+            <Value>../include/core/formatter</Value>
+            <Value>../include/core/scheduler</Value>
+            <Value>../include/core/system_commands</Value>
+            <Value>../include/api</Value>
+            <Value>../include/callbacks</Value>
+            <Value>../include/math</Value>
+            <Value>../include/app</Value>
+            <Value>../include/examples</Value>
+            <Value>../include/examples/support</Value>
+          </ListValues>
+        </armgcccpp.compiler.directories.IncludePaths>
+        <armgcccpp.compiler.optimization.level>Optimize debugging experience (-Og)</armgcccpp.compiler.optimization.level>
+        <armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>True</armgcccpp.compiler.optimization.PrepareFunctionsForGarbageCollection>
+        <armgcccpp.compiler.optimization.DebugLevel>Maximum (-g3)</armgcccpp.compiler.optimization.DebugLevel>
+        <armgcccpp.compiler.warnings.AllWarnings>True</armgcccpp.compiler.warnings.AllWarnings>
+        <armgcccpp.linker.libraries.Libraries>
+          <ListValues>
+            <Value>libm</Value>
+          </ListValues>
+        </armgcccpp.linker.libraries.Libraries>
+        <armgcccpp.linker.libraries.LibrarySearchPaths>
+          <ListValues>
+            <Value>%24(ProjectDir)\Device_Startup</Value>
+          </ListValues>
+        </armgcccpp.linker.libraries.LibrarySearchPaths>
+        <armgcccpp.linker.optimization.GarbageCollectUnusedSections>True</armgcccpp.linker.optimization.GarbageCollectUnusedSections>
+        <armgcccpp.linker.memorysettings.ExternalRAM />
+        <armgcccpp.linker.miscellaneous.LinkerFlags>-Tsamd21j18a_flash.ld</armgcccpp.linker.miscellaneous.LinkerFlags>
+        <armgcccpp.assembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcccpp.assembler.general.IncludePaths>
+        <armgcccpp.assembler.debugging.DebugLevel>Default (-g)</armgcccpp.assembler.debugging.DebugLevel>
+        <armgcccpp.preprocessingassembler.general.IncludePaths>
+          <ListValues>
+            <Value>%24(PackRepoDir)\arm\CMSIS\5.4.0\CMSIS\Core\Include\</Value>
+            <Value>%24(PackRepoDir)\atmel\SAMD21_DFP\1.3.395\samd21a\include</Value>
+          </ListValues>
+        </armgcccpp.preprocessingassembler.general.IncludePaths>
+        <armgcccpp.preprocessingassembler.debugging.DebugLevel>Default (-Wa,-g)</armgcccpp.preprocessingassembler.debugging.DebugLevel>
+      </ArmGccCpp>
+    </ToolchainSettings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="include\app\app_run.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\examples\support\dma_ram_test.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\api\dyn_flash_formatter_write.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\api\lcd_update.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\examples\support\portattu_flash_testi.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\examples\support\tft_tests.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\app\app_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\callbacks\callbacks.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\core\formatter\backend.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\core\scheduler\softirq.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\core\system_commands\system_commands.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\drv8833\drv8833.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\lcd\pcf8574.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\dma_tft.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeMono12pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeSans12pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeSans18pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeSansBold12pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeSansBold18pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\adc\ac_control.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\adc\adc_read.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\devif\i2c_0.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\devif\spi5.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\devif\spi3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\dma\dma.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\evsys\evsys.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\mem\flash_wr.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\mem\sst26_flash.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\rtc_calendar2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\timer3.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\timer4.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\timer5.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\timer6.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\timer\timer7.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\usart\usart2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\usart\usart4.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\adc\ac_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\adc\adc_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\extif\eic_extint_map.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\extif\eic_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\extif\eic_pins.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\gpio\board_pins.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\gpio\gpio_pins.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\gpio\gpio_simplex.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\sercom\sercom0_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\sercom\sercom2_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\sercom\sercom4_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\sercom\sercom5_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\sercom\sercom_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\debounce.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\rtc_mode2_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\systick.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\tc3_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\tc4_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\tc6_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\tc7_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\tcc0_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hpl\timer\timer_init.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\iinkkarit.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\math\random.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\project_config.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\core\systeminit.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\examples\examples.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Device_Startup\startup_samd21.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="Device_Startup\system_samd21.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\core\formatter\formatter.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\dht20\dht20.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\lcd\lcdpcf8574.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\FreeMono9pt7b.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\tft\tft.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\support\dma_ram_test.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="main.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\api\dyn_flash_formatter_write.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\api\lcd_update.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\support\portattu_flash_testi.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\support\tft_tests.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_tft_stress.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_dma_ram.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_dma_tft.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_evsys_tc_capture.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_eic_evsys_tc7_pulse.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_qspi_flash_test.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_qspi_dyn_packer.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\app\app_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\app\app_run.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\callbacks\callback_func.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\core\formatter\backend.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\core\formatter\formatter.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\core\system_commands\system_commands.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\core\systeminit.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\dht20\dht20.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\drv8833\drv8833.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\lcd\lcdpcf8574.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\lcd\pcf8574.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\tft\dma_tft.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\drivers\tft\tft.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\adc\ac_control.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\adc\adc_read.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\devif\i2c_0.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\devif\spi5.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\devif\spi3.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\dma\dma.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\evsys\evsys.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\mem\flash_wr.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\mem\sst26_flash.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\rtc_calendar2.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\timer3.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\timer4.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\timer5.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\timer6.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\timer\timer7.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\usart\usart2.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hal\usart\usart4.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\adc\ac_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\adc\adc_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\extif\eic_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\extif\eic_pins.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\gpio\board_pins.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\gpio\gpio_pins.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom0_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom2_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom3_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom4_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom5_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\debounce.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\rtc_mode2_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\systick.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tc3_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tc4_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tc5_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tc7_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tcc0.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\timer\tc6_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Device_Startup\" />
+    <Folder Include="examples\support" />
+    <Folder Include="include" />
+    <Folder Include="include\app\" />
+    <Folder Include="include\core\formatter" />
+    <Folder Include="include\core\scheduler" />
+    <Folder Include="include\core\system_commands" />
+    <Folder Include="include\drivers\dht20" />
+    <Folder Include="include\drivers\lcd" />
+    <Folder Include="include\drivers\drv8833" />
+    <Folder Include="include\drivers\tft" />
+    <Folder Include="include\examples\" />
+    <Folder Include="include\examples\support" />
+    <Folder Include="include\hal" />
+    <Folder Include="include\hal\adc" />
+    <Folder Include="include\hal\mem" />
+    <Folder Include="include\hal\devif" />
+    <Folder Include="include\hal\dma" />
+    <Folder Include="include\hal\evsys" />
+    <Folder Include="include\hal\timer" />
+    <Folder Include="include\hal\usart" />
+    <Folder Include="include\hpl" />
+    <Folder Include="include\drivers" />
+    <Folder Include="include\core" />
+    <Folder Include="examples" />
+    <Folder Include="include\hpl\adc" />
+    <Folder Include="include\hpl\gpio" />
+    <Folder Include="include\hpl\extif" />
+    <Folder Include="include\hpl\sercom" />
+    <Folder Include="include\hpl\timer" />
+    <Folder Include="include\math" />
+    <Folder Include="include\api" />
+    <Folder Include="include\callbacks" />
+    <Folder Include="src" />
+    <Folder Include="src\core\formatter" />
+    <Folder Include="src\core\scheduler" />
+    <Folder Include="src\core\system_commands" />
+    <Folder Include="src\drivers" />
+    <Folder Include="src\drivers\dht20" />
+    <Folder Include="src\drivers\lcd" />
+    <Folder Include="src\drivers\drv8833" />
+    <Folder Include="src\drivers\tft" />
+    <Folder Include="src\hal" />
+    <Folder Include="src\hal\adc" />
+    <Folder Include="src\hal\mem" />
+    <Folder Include="src\hal\devif" />
+    <Folder Include="src\hal\dma" />
+    <Folder Include="src\hal\evsys" />
+    <Folder Include="src\hal\usart" />
+    <Folder Include="src\hal\timer" />
+    <Folder Include="src\hpl" />
+    <Folder Include="src\core" />
+    <Folder Include="src\api" />
+    <Folder Include="src\hpl\adc" />
+    <Folder Include="src\hpl\gpio" />
+    <Folder Include="src\hpl\extif" />
+    <Folder Include="src\hpl\timer" />
+    <Folder Include="src\hpl\sercom" />
+    <Folder Include="src\callbacks" />
+    <Folder Include="src\app" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Device_Startup\samd21j18a_flash.ld">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="Device_Startup\samd21j18a_sram.ld">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="include\hpl\timer\tc5_init.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="README.txt">
+      <SubType>compile</SubType>
+    </None>
+  </ItemGroup>
+  <Import Project="$(AVRSTUDIO_EXE_PATH)\\Vs\\Compiler.targets" />
+</Project>

@@ -1,0 +1,39 @@
+samd21_template1
+Copyright 2026 Kari63
+
+Bare-metal C++ firmware template for ATSAMD21J18A (SAMD21 Xplained Pro).
+Unless stated otherwise below or in a file header, the source code in this
+repository is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+
+Third-party components
+======================
+
+1. Microchip Technology Inc. - device startup and linker scripts
+   Files:   samd21_template1/Device_Startup/startup_samd21.c
+            samd21_template1/Device_Startup/samd21j18a_flash.ld
+            samd21_template1/Device_Startup/samd21j18a_sram.ld
+   Origin:  Atmel SAMD21_DFP 1.3.395
+   License: Apache-2.0, Copyright (c) 2018 Microchip Technology Inc.
+            Original headers retained.
+   Note:    The device headers (samd21.h etc.) and CMSIS are NOT included.
+            Install SAMD21_DFP 1.3.395 and CMSIS 5.x to build.
+
+2. Adafruit-GFX-Library - graphics primitives and GFXfont format
+   Files:   samd21_template1/include/drivers/tft/tft.h
+            samd21_template1/src/drivers/tft/tft.cpp
+   Origin:  https://github.com/adafruit/Adafruit-GFX-Library
+   License: BSD, Copyright (c) 2012 Adafruit Industries
+            (see LICENSES/BSD-Adafruit-GFX.txt). Modified and ported to SAMD21.
+
+3. Adafruit-ST7735-Library - ST7735 initialization sequence
+   Files:   samd21_template1/src/drivers/tft/tft.cpp
+   Origin:  https://github.com/adafruit/Adafruit-ST7735-Library
+   License: MIT, written by Limor Fried/Ladyada for Adafruit Industries
+            (see LICENSES/MIT-Adafruit-ST7735.txt). Modified and ported to SAMD21.
+
+4. GNU FreeFont - bitmap font data
+   Files:   samd21_template1/include/drivers/tft/Free*.h
+   Origin:  GNU FreeFont, converted with Adafruit-GFX-Library fontconvert
+   License: GPL-3.0-or-later with font exception
+            (see LICENSES/FreeFont-font-exception.txt and LICENSES/GPL-3.0.txt)

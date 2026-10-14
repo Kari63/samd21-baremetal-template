@@ -1,0 +1,29 @@
+Subject: ATSAMD21J18A rev D: ADC RESRDY-to-DMAC channel stalls with unlinked descriptor while TCC0 events continue
+
+Hello Microchip Technical Support,
+
+I need help diagnosing a repeatable ADC acquisition stall on an ATSAMD21J18A (silicon revision D, DID.REVISION=3) on a SAMD21 Xplained Pro board. This request is specifically about the ADC-to-DMAC path with an unlinked descriptor. It is separate from an earlier intermittent cross-channel writeback-context problem observed during concurrent TFT DMA; that earlier symptom is not assumed to have the same cause.
+
+Configuration:
+- Bare-metal C++ project, Atmel Studio 7, GNU Arm toolchain 6.3.1, Debug (-O0), SAMD21_DFP 1.3.395, CMSIS 5.4.0.
+- ADC clock source is GCLK0 from DFLL48M (nominal 48 MHz), ADC prescaler DIV32 (nominal ADC clock 1.5 MHz), 12-bit result, AIN0/PA02, gain DIV2.
+- ADC uses EVCTRL.STARTEI. TCC0 MC0 is routed through asynchronous EVSYS channel 2 to ADC START.
+- TCC0 uses GCLK4 from DFLL48M / 6 (nominal 8 MHz), prescaler DIV1, single-slope NPWM, PER=999 and CC0=499 (nominally 8 kHz MC0 events).
+- ADC RESRDY triggers DMAC channel 1, priority level 3, TRIGACT_BEAT. Each unlinked descriptor transfers 16 halfword results from ADC.RESULT to SRAM. On block completion, the DMAC ISR alternates the SRAM buffer, rebuilds the descriptor with DESCADDR=0 and re-enables channel 1.
+- The normal TFT drawing call app2() was commented out for this run. TFT DMA busy/chunk counters and ch4/ch5 busy flags were zero at the stall. TFT display initialization still runs once at startup; no continuous TFT DMA workload was active.
+
+Observed failure:
+After approximately 23 minutes 06 seconds by the board's RTC, ADC block-count progress stopped. ADC DMA error count remained zero. At the stop ADC CTRLA=0x02, EVCTRL=0x01, INTFLAG=0x0B, STATUS=0. DMAC BUSYCH, PENDCH and INTPEND were all zero. The user inspected the ADC source/writeback descriptors and reports that they had not been overwritten with another channel's descriptor. TCC0-to-ADC event activity was observed to continue, but no independent event counter or capture is included here.
+
+A separate earlier unlinked-ADC run stopped with the same ADC INTFLAG=0x0B and an apparently valid writeback. In that run, manually writing SWTRIGCTRL bit 1 (DMAC channel 1 software trigger, value 0x2) and resuming was followed by ADC progress resuming (+410 completed blocks); RESRDY cleared while OVERRUN remained set. This is a separate run and is reported as diagnostic behavior, not a confirmed workaround.
+
+Could you please advise:
+1. What is the exact ADC RESRDY-to-DMAC request behavior when RESRDY remains set or OVERRUN occurs? Is the request level-sensitive, edge-sensitive, or otherwise qualified?
+2. Can a new ADC conversion/event continue while the channel is enabled but DMAC BUSYCH/PENDCH/INTPEND are zero and the ADC result remains ready?
+3. Is there a known SAMD21 revision D erratum or recommended sequence for recovering this state with an unlinked descriptor?
+4. Is a DMAC software trigger or CPU read of ADC.RESULT an appropriate diagnostic/recovery action, and what state must be cleared/rearmed first?
+5. Does the supplied 8 kHz TCC0 event rate exceed any relevant ADC/EVSYS/DMAC timing requirement with a 1.5 MHz ADC clock?
+
+The accompanying EVIDENCE.txt distinguishes measured registers, user observations and a separate earlier recovery trial. SOURCE_EXCERPTS.txt contains only the relevant active source excerpts and is not a standalone buildable project. No root cause or silicon defect is being asserted.
+
+Thank you for reviewing the ADC/DMAC request path and advising what additional capture would be useful.

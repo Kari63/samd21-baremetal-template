@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "name": "Atmel-ARM",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/include/**",
+                "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/SAMD21_DFP/1.3.395/samd21a/include/**",
+                "C:/Program Files (x86)/Atmel/Studio/7.0/Packs/arm/CMSIS/5.4.0/CMSIS/Core/Include/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "__SAMD21J18A__"
+            ],
+            "compilerPath": "C:/Program Files (x86)/Atmel/Studio/7.0/toolchain/arm/arm-gnu-toolchain/bin/arm-none-eabi-gcc.exe",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-arm"
+        }
+    ],
+    "version": 4
+}

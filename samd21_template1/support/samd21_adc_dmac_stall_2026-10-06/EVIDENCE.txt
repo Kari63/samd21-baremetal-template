@@ -1,0 +1,78 @@
+ATSAMD21J18A ADC/DMAC STALL - EVIDENCE
+Date: 2026-10-06
+Board/device: SAMD21 Xplained Pro, ATSAMD21J18A, user-reported revision D (DID.REVISION=3)
+
+CURRENT RUN: UNLINKED ADC DMA, TFT DRAWING DMA INACTIVE
+- app_run() had the app2() call commented out before this run.
+- No TFT DMA blocks were started: tft_dma_busy=0, tft_dma_remaining=0,
+  tft_dma_chunk_count=0, dma_ch4_busy=0 and dma_ch5_busy=0 at the stop.
+- TFT initialization still occurred once during startup; this was not a run with
+  the TFT/SERCOM5 peripheral completely removed.
+- ADC acquisition used TCC0 MC0 -> asynchronous EVSYS channel 2 -> ADC START.
+- TCC0 source clock: GCLK4, nominal DFLL48M/6 = 8 MHz; prescaler DIV1,
+  NPWM, PER=999, CC0=499. Nominal event rate is 8 kHz.
+- ADC clock: GCLK0 from DFLL48M, nominal 48 MHz / ADC prescaler DIV32 = 1.5 MHz.
+- ADC: 12-bit, AIN0/PA02, gain DIV2, EVCTRL.STARTEI.
+- DMAC: channel 1, LVL3, TRIGACT_BEAT, trigger ADC RESRDY. One unlinked
+  descriptor transfers 16 halfword samples to SRAM; the block-complete ISR
+  switches the software A/B buffer, rebuilds DESCADDR=0 and re-enables ch1.
+
+STOP OBSERVATION
+- RTC elapsed time reported by user: 23 min 06 sec.
+- SysTick at guard: 0x0013D8C9 = 1,300,681 ms = 21 min 40.681 sec.
+  RTC/SysTick disagreement was also observed in earlier tests and remains
+  unexplained; RTC is the user's elapsed-time reference.
+- adc_dma_block_count = 0x0009F144 = 651,588 completed blocks.
+- At 16 samples/block, this is 10,425,408 samples in completed blocks.
+- adc_dma_error_count = 0.
+- The Watch excerpt supplied for this run shows the same block/error/SysTick
+  values above. Expressions for dma_repro_state.spi_blocks,
+  dma_repro_state.stop_reason, dma_repro_state.elapsed_ms and its other fields
+  all say "could not evaluate". Those symbols belong to a discarded reproducer
+  build and do not exist in the restored normal firmware; these failed Watch
+  evaluations are not peripheral faults and are not treated as evidence.
+- ADC registers: CTRLA=0x02, EVCTRL=0x01, INTFLAG=0x0B, STATUS=0x00.
+  INTFLAG 0x0B was decoded as RESRDY | OVERRUN | SYNCRDY.
+- DMAC: BUSYCH=0, PENDCH=0, INTPEND=0.
+- TFT DMA indicators at the same stop: tft_dma_busy=0,
+  tft_dma_waiting_for_txc=0, tft_dma_remaining=0, tft_dma_chunk_count=0,
+  ch4 busy=0, ch5 busy=0. TFT snapshots were zero; stall_snapshot_valid=0,
+  so those snapshot fields are not live channel captures.
+- User reports TCC0-to-ADC event activity continued. No TCC event counter or
+  independent scope capture is included in this evidence package.
+- User reports inspecting the ADC source and writeback descriptors and finding
+  no foreign-channel descriptor contents. The pasted Watch listing elided the
+  descriptor fields as {...}; numeric descriptor tuples/raw SRAM bytes are not
+  included here. Please treat descriptor integrity as a user-reported finding,
+  not as independently auditable raw evidence in this text file.
+
+SEPARATE EARLIER UNLINKED-ADC RECOVERY OBSERVATION
+- In a separate TCC0-triggered run, ADC stopped at about 2 min 55 sec with
+  ADC count 0x2943, ADC INTFLAG=0x0B, DMA error count=0, and a correct-looking
+  ADC writeback (reported BTCTRL=0x0909, BTCNT=15, SRCADDR=0x4200401A,
+  DSTADDR=0x20001120, DESCADDR=0).
+- Skipping the BKPT with debugger Set Next Statement and resuming alone did not
+  restart ADC progress.
+- Subsequently writing DMAC SWTRIGCTRL=0x2 (software trigger channel 1) and
+  resuming was followed by ADC block count increasing from 0x2943 to 0x2ADD
+  (+410); ADC INTFLAG changed from 0x0B to 0x0A (RESRDY cleared, OVERRUN
+  remained set). This is a separate diagnostic run, not proof of cause/fix.
+
+DISTINCT HISTORICAL SYMPTOM - DO NOT MERGE WITH THIS STALL
+- Earlier runs with active TFT SPI DMA showed a foreign channel's transfer
+  context in another channel's writeback slot, in both ADC-ch6/SPI-ch4/ch5
+  and ADC-ch1/SPI-ch4/ch5 mappings. See the existing archived package
+  support/samd21_dmac_case_2026-10-05 for that separate linked/writeback case.
+- The current unlinked ADC stall occurred with TFT drawing DMA inactive and
+  showed no reported descriptor corruption. It may be a different failure
+  mechanism; no common root cause has been established.
+
+LIMITATIONS
+- No screenshot/raw memory dump or exact source/writeback field values from the
+  current 23:06 run are included. The supplied Watch excerpt does not expand
+  those descriptor structs. Attach debugger screenshots or raw SRAM values if
+  available.
+- Peripheral state was inspected after a progress guard breakpoint; values can
+  differ after CPU halt, especially where debug-freeze controls are disabled.
+- No automatic reset/rearm was credited as a recovery during the current run.
+- This is a source/evidence review package, not a standalone minimal firmware.
