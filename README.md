@@ -8,7 +8,7 @@ The template is a learning project about the Cortex-M0+ and the SAMD21 internals
 Every peripheral is set up register by register, and the hardware pitfalls found
 along the way are written down below. Many of them are not in the datasheet.
 
-Version 0.9.0.
+Version 0.10.0. What changed since 0.9.0: [CHANGELOG.md](CHANGELOG.md).
 
 ## Hardware
 
@@ -16,7 +16,10 @@ Version 0.9.0.
 - External SPI flash replaced with an **SST26VF/WF** series part
 - ST7735 128x160 TFT (SPI)
 - HD44780 16x2 character LCD on a PCF8574 I2C backpack
-- Optional: DHT20 temperature/humidity sensor, DRV8833 motor driver
+- Optional: DHT20 temperature/humidity sensor and BMP280 pressure sensor (I2C),
+  DRV8833 motor driver
+- Serial console on the board's **EDBG virtual COM port** (the USB debug cable),
+  no separate USB-UART adapter needed
 
 Pin and peripheral map: [samd21_template1/README.txt](samd21_template1/README.txt).
 
@@ -25,16 +28,18 @@ Pin and peripheral map: [samd21_template1/README.txt](samd21_template1/README.tx
 | Area | Content |
 | --- | --- |
 | Clocks | XOSC32K -> DFLL48M closed loop (48 MHz CPU), OSC8M and DFLL/6 for timers, all in `SystemInit()` |
-| SERCOM | USART x2 (ring buffers, interrupts), I2C master, SPI master x2 |
+| SERCOM | USART x3 (ring buffers, interrupts; console on the EDBG virtual COM port), I2C master with a transfer API and timeouts, SPI master x2 |
 | Timers | TC3..TC7 and TCC0: periodic, event counting, capture, pulse-width (PPW) capture, PWM |
-| RTC | Mode 0 and mode 2 (calendar) with alarm, set from a serial command console |
+| RTC | Mode 2 calendar, read in continuous read-synchronization mode (no waiting), set from the serial command console |
 | EIC / EVSYS | Per-pin EXTINT configuration from a pin table; EVSYS channels/users including software events |
 | ADC | Event-triggered conversions, results moved by DMAC into ping-pong buffers |
 | AC | Analog comparators with adjustable thresholds |
-| DMAC | ADC ping-pong, SPI TX for DMA-accelerated TFT fills, memory-to-memory test |
-| Displays | ST7735 driver (Adafruit-GFX based, GFXfont support); HD44780 driver with a shadow buffer |
+| DMAC | ADC ping-pong, SPI TX for DMA-accelerated TFT fills, I2C TX (a whole LCD update in one frame), memory-to-memory test |
+| Displays | ST7735 driver (Adafruit-GFX based, GFXfont support, opaque text without flicker, clipping on all edges); HD44780 driver with a shadow buffer |
+| Sensors | DHT20 (non-blocking state machine), BMP280 (integer compensation, one burst read) |
 | SPI flash | Two SST26 drivers on purpose: a full command-level driver (`sst26_flash`) and a lightweight self-contained one (`flash_wr`); chip/sector erase, page program, and a "dynamic packer" that streams text to flash |
-| `print()` | Small printf-style formatter; the last argument selects the output (TFT, LCD, USART2, USART4, flash) |
+| `print()` | Small printf-style formatter; the last argument selects the output (TFT, LCD, USART2, console USART3, flash) |
+| Console | Commands over the EDBG virtual COM port, 115200 8N1: HELP, SETTIME, SETDATE, I2CSCAN, BMP280, DHT20 |
 
 Not implemented: DAC, I2S. USB and digital audio are out of scope.
 
@@ -74,7 +79,8 @@ samd21_template1/
 
 Examples (`EXAMPLE_SELECT` in `project_config.h`): TFT stress test, DMA TFT fills,
 EVSYS software event + TC capture (main-loop timing), EIC -> EVSYS -> TC7 pulse
-width, DMA RAM-to-RAM test, SST26 flash test, and the SST26 dynamic text packer.
+width, DMA RAM-to-RAM test, SST26 flash test, the SST26 dynamic text packer,
+TFT clock + ADC voltage, and a TFT weather page (clock, DHT20, BMP280).
 
 ## Building
 
@@ -133,6 +139,25 @@ of this repository for anyone else working with the SAMD21.
 - DMAC priority levels (`CHCTRLB.LVL`) only arbitrate between DMA channels. They
   have nothing to do with NVIC priorities: the DMAC interrupt still waits behind
   any other handler at the same NVIC priority.
+
+**RTC (mode 2, GCLK_RTC = XOSC32K/32 = 1.024 kHz)**
+- Every synchronized write takes 5-6 GCLK_RTC periods, i.e. ~5-6 ms. No
+  `SYNCBUSY` waits in an interrupt handler or in timing-critical code: an
+  ALARM write in the RTC handler showed up as a ~6 ms peak in the main-loop
+  timing. The clock cannot be made faster (mode 2 needs 1 Hz, the largest
+  prescaler is DIV1024).
+- Read `CLOCK` with continuous read synchronization (`READREQ.RCONT`): the
+  read buffer stays current and the read does not wait.
+- Writing `CTRL.ENABLE` **clears `READREQ.RCONT`** (READREQ 0x4010 -> 0x0010).
+  After that every `CLOCK` read stalls the CPU bus for ~5 ms, interrupts
+  included. Set RCONT again after every disable/enable, e.g. after setting the
+  time.
+
+**EDBG virtual COM port**
+- The SAMD21 Xplained Pro EDBG CDC is wired to PA22 (SAMD21 TX) / PA23 (RX),
+  SERCOM3 PAD0/PAD1, function C. It forwards data **only while the PC asserts
+  DTR**. PuTTY does that by default; in your own tools set DTR (e.g.
+  `SerialPort.DtrEnable`). Without DTR nothing passes in either direction.
 
 **DMAC**
 - Descriptor and write-back tables must be 16-byte aligned.

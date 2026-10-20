@@ -9,6 +9,7 @@
 #pragma once
 
 void sercom0_init(void);
+void sercom1_init(void);
 void sercom2_init(void);
 void sercom3_init(void);
 void sercom4_init(void);

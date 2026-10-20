@@ -12,7 +12,7 @@
 
 extern volatile uint32_t systick_ms_laskuri;
 extern volatile bool cmd_softirq;
-extern volatile bool usart4_has_data;
+extern volatile bool usart3_has_data;
 extern volatile bool lcd_softirq;
 
 

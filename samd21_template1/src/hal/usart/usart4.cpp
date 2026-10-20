@@ -40,7 +40,7 @@ void SERCOM4_Handler(void)
 			rx4_buffer[rx4_buffer_head] = incoming;
 			rx4_buffer_head = next;
 		}
-		 usart4_has_data = true;   // signal for the SysTick soft IRQ
+		// (no console wake-up: the console is usart3, EDBG virtual COM)
 	}
 
 	/* TX side */
@@ -110,17 +110,18 @@ void usart4_write_int(int16_t v)
 {
 	char buf[8];
 	int pos = 0;
+	int32_t w = v;   // int32: -32768 negates without overflow
 
-	if (v < 0) {
+	if (w < 0) {
 		usart4_write_char('-');
-		v = -v;
+		w = -w;
 	}
 
 	// collect the digits in reverse
 	do {
-		buf[pos++] = '0' + (v % 10);
-		v /= 10;
-	} while (v > 0);
+		buf[pos++] = '0' + (w % 10);
+		w /= 10;
+	} while (w > 0);
 
 	// print them in the right order
 	while (pos--)

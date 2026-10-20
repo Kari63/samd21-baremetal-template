@@ -23,6 +23,15 @@
  * Shadow buffer: frame[] = wanted view, shadow[] = what is on the display.
  * lcd_flush() sends the differences and skips the address command when the
  * auto-incremented HD44780 DDRAM address is already correct.
+ *
+ * lcd_flush() sends all differences in ONE I2C frame, 5 states per LCD byte:
+ *
+ *   [setup] [hi|E] [hi] [lo|E] [lo]
+ *
+ * The setup state (RS, data, E low) is always there: it gives tAS and keeps
+ * the falling E edges of consecutive bytes 3 byte times apart, the same
+ * margin as the STOP + START + address gap of the one-byte frames (same
+ * static_assert). USE_I2C_DMA: the frame goes in the background (DMAC).
  */
 
 #include "project_config.h"
@@ -31,6 +40,7 @@
 
 #include "lcdpcf8574.h"
 #include "pcf8574.h"
+#include "i2c_0.h"
 #include "systick.h"
 
 
@@ -74,6 +84,13 @@ static char    frame[LCD_LINES][LCD_COLUMNS];
 static char    shadow[LCD_LINES][LCD_COLUMNS];
 static uint8_t hw_addr;         /* HD44780 DDRAM address counter, if known */
 static bool    shadow_valid;    /* false: next flush writes everything */
+
+/* lcd_flush() frame: per line at most one address command + LCD_COLUMNS
+   characters (a changed run needs one address command, runs + characters
+   <= LCD_COLUMNS + 1), 5 states each. Read by the DMA until it is done.
+   USE_I2C_DMA: up to 255 states go by DMA (16x2: 170), longer ones polled. */
+static constexpr uint16_t FLUSH_STATES = 5u;
+static uint8_t flush_buf[LCD_LINES * FLUSH_STATES * (LCD_COLUMNS + 1u)];
 
 
 /* Cycle delay: SUBS (1) + taken BNE (2) = 3 cycles/iteration without wait
@@ -138,6 +155,22 @@ static void lcd_write_byte(uint8_t b, uint8_t rs)
 	s[n++] = base | lo | BIT_E;
 	s[n++] = base | lo;
 	pcf8574_setoutputs(LCD_PCF8574_DEVICEID, s, n);
+}
+
+
+/* One LCD byte into the lcd_flush() frame, returns the state count (5). */
+static uint16_t put_byte(uint8_t *s, uint8_t b, uint8_t rs)
+{
+	uint8_t base = lcd_bl | rs;
+	uint8_t hi   = nibble_bits(b >> 4);
+	uint8_t lo   = nibble_bits(b);
+
+	s[0] = base | hi;               /* setup: RS + tAS, gap from the previous byte */
+	s[1] = base | hi | BIT_E;
+	s[2] = base | hi;
+	s[3] = base | lo | BIT_E;
+	s[4] = base | lo;
+	return FLUSH_STATES;
 }
 
 
@@ -293,9 +326,22 @@ void lcd_invalidate(void)
 /* Sends only the changed characters (everything after an invalidate). The
    address command is sent only when the auto-incremented HD44780 address
    does not already point to the right place, so consecutive characters go
-   with a single address command. */
+   with a single address command. Everything goes in one I2C frame.
+   USE_I2C_DMA: returns at once. If the previous flush is still on the bus,
+   this one is skipped: frame[] keeps the wanted view and the next flush sends
+   the differences. A failed transfer (NACK, bus error, timeout) makes the
+   next flush rewrite the whole display. */
 void lcd_flush(void)
 {
+#if USE_I2C_DMA
+	if (i2c_dma_busy()) {
+		return;
+	}
+	if (i2c_dma_take_error()) {
+		lcd_invalidate();
+	}
+#endif
+	uint16_t n = 0;
 	for (uint8_t y = 0; y < LCD_LINES; y++) {
 		for (uint8_t x = 0; x < LCD_COLUMNS; x++) {
 			char c = frame[y][x];
@@ -304,15 +350,19 @@ void lcd_flush(void)
 			}
 			uint8_t addr = (uint8_t)(line_start[y] + x);
 			if (addr != hw_addr) {
-				hd_command(HD_SET_DDRAM | addr);
+				n += put_byte(&flush_buf[n], HD_SET_DDRAM | addr, 0);
 			}
-			hd_data((uint8_t)c);
+			n += put_byte(&flush_buf[n], (uint8_t)c, BIT_RS);
 			shadow[y][x] = c;
 			hw_addr = (uint8_t)(addr + 1);  /* at the end of a line this does not match
 			                                   the HW, but never hits a target address */
 		}
 	}
 	shadow_valid = true;
+
+	if (n != 0) {
+		pcf8574_write_frame(LCD_PCF8574_DEVICEID, flush_buf, n);
+	}
 }
 
 

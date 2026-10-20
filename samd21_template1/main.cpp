@@ -48,6 +48,9 @@ int main(void)
 #if USE_LCD
 		LCD_SOFTIRQ_DISPATCH();
 #endif
+#if USE_DHT20
+		DHT20_SOFTIRQ_DISPATCH();      // DHT20 state machine: one short I2C step
+#endif
 	
 #if EXAMPLE_SELECT != EXAMPLE_NONE
 		example_run();

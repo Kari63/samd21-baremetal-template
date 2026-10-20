@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "project_config.h"
 #include "adc_read.h"
 #include "timer3.h"
 #include "systick.h"
@@ -18,7 +19,7 @@
 do {                                  \
 	if (cmd_softirq) {                \
 		cmd_softirq = false;          \
-		usart4_has_data = false;      \
+		usart3_has_data = false;      \
 		command_softirq();            \
 	}                                 \
 } while (0)
@@ -38,3 +39,15 @@ do {                                  \
 		lcd_softirq_handler();        \
 	}                                 \
 } while (0)
+
+#if USE_DHT20
+#include "dht20.h"
+
+#define DHT20_SOFTIRQ_DISPATCH()      \
+do {                                  \
+	if (dht20_softirq) {              \
+		dht20_softirq = false;        \
+		dht20_softirq_handler();      \
+	}                                 \
+} while (0)
+#endif

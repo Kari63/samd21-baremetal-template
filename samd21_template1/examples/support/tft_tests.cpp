@@ -6,11 +6,15 @@
  */ 
 
 #include "samd21.h"
+#include "project_config.h"
 #include <math.h>
 #include "tft.h"
 #include "dma_tft.h"
 #include "examples/support/tft_tests.h"
 #include "random.h"
+#include "systick.h"
+#include "FreeMono9pt7b.h"
+#include "FreeSans12pt7b.h"
 
 
 
@@ -354,3 +358,127 @@ void aja_lopullinen_stressitesti(void) {
 	}
 }
 
+#if USE_SYSTICK_DELAY
+/* Text check: default font size 1 and 2, GFXfont size 1 and 2, text right
+   after a DMA fill, all four rotations and an opaque counter rewritten in
+   place without fillRect (must not flicker).
+   Text is opaque: every case sets its background colour explicitly.
+   State machine like the stress test: one step per
+   example_run() call, holds timed from the clock (no delay_ms), so LCD_update
+   and the rest of the main loop keep running. Returns true when done. */
+static const char *const rot_nimi[4] = { "ROT 0", "ROT 1", "ROT 2", "ROT 3" };
+static const uint8_t rot_jarjestys[4] = { 0, 2, 3, 1 };   // ends in the init rotation 1
+
+bool aja_tekstitesti(void) {
+	static uint8_t  vaihe = 0;
+	static uint8_t  k = 0;
+	static uint32_t t0 = 0;
+	static uint32_t hold_ms = 0;
+
+	if (vaihe != 0 && vaihe != 6 && (uint32_t)(systick_ms_laskuri - t0) < hold_ms) {
+		return false;                           // hold: main loop keeps running
+	}
+
+	switch (vaihe) {
+	case 0:
+		TFT_fillScreen(_BLACK);
+
+		TFT_setFont(nullptr);
+		TFT_setFontSize(1, 1);
+		TFT_setFontColor(_WHITE);
+		TFT_setBackgroundColor(_BLUE);
+		TFT_setCursor(0, 0);
+		TFT_drawString("OLETUS 1 ABC 123");
+
+		TFT_setFontSize(2, 2);
+		TFT_setFontColor(_YELLOW);
+		TFT_setBackgroundColor(_RED);
+		TFT_setCursor(0, 12);
+		TFT_drawString("KOKO 2");
+
+		TFT_setFont(&FreeMono9pt7b);
+		TFT_setFontSize(1, 1);
+		TFT_setFontColor(_GREEN);
+		TFT_setBackgroundColor(_BLACK);
+		TFT_setCursor(0, 50);                   // GFXfont: y = baseline
+		TFT_drawString("Mono 9pt Abc");
+
+		TFT_setFontSize(2, 2);
+		TFT_setFontColor(_CYAN);
+		TFT_setCursor(0, 90);
+		TFT_drawString("Ab2");
+
+		TFT_fillRect_DMA(100, 100, 60, 28, _MAGENTA);
+		vaihe = 1;
+		return false;
+
+	case 1:                                     // text right after the DMA fill
+		if (TFT_fillScreen_DMA_busy()) {
+			return false;
+		}
+		TFT_setFont(nullptr);
+		TFT_setFontSize(1, 1);
+		TFT_setFontColor(_BLACK);
+		TFT_setBackgroundColor(_MAGENTA);
+		TFT_setCursor(104, 110);
+		TFT_drawString("DMA OK");
+		t0 = systick_ms_laskuri; hold_ms = 5000;
+		k = 0;
+		vaihe = 2;
+		return false;
+
+	case 2: {                                   // Rotations: red frame on the edge of the whole _width x _height area, 0/2 portrait, 1/3 landscape
+		uint8_t r = rot_jarjestys[k];
+		TFT_setRotation(r);
+		TFT_fillScreen(_BLACK);
+		TFT_drawRect(0, 0, _width, _height, _RED);
+		TFT_drawLine(0, 0, 20, 0, _GREEN);      // green = top-left corner
+		TFT_drawLine(0, 0, 0, 20, _GREEN);
+		TFT_setFontSize(2, 2);
+		TFT_setFontColor(_WHITE);
+		TFT_setBackgroundColor(_BLACK);
+		TFT_setCursor(10, 10);
+		TFT_drawString(rot_nimi[r]);
+		t0 = systick_ms_laskuri; hold_ms = 2500;
+		vaihe = (++k < 4) ? 2 : 3;
+		return false;
+	}
+
+	case 3:                                     // Opaque counter: no fillRect between the values
+		TFT_setFontSize(1, 1);
+		TFT_fillScreen(_BLACK);
+		TFT_setFont(&FreeSans12pt7b);
+		TFT_setFontColor(_WHITE);
+		TFT_setBackgroundColor(_BLACK);
+		TFT_setCursor(10, 30);
+		TFT_drawString("No fillRect");
+		TFT_setFontColor(_YELLOW);
+		TFT_setBackgroundColor(_BLUE);
+		k = 0;
+		t0 = systick_ms_laskuri; hold_ms = 0;
+		vaihe = 4;
+		return false;
+
+	case 4: {                                   // 000..199, 25 ms per value, 3 digits = same width
+		char txt[4] = { (char)('0' + k / 100), (char)('0' + (k / 10) % 10), (char)('0' + k % 10), '\0' };
+		TFT_setCursor(50, 80);
+		TFT_drawString(txt);
+		t0 = systick_ms_laskuri; hold_ms = 25;
+		if (++k >= 200) {
+			hold_ms = 1500;
+			vaihe = 5;
+		}
+		return false;
+	}
+
+	case 5:
+		TFT_setFont(nullptr);
+		TFT_fillScreen(_BLACK);
+		vaihe = 6;
+		return true;
+
+	default:                                    // 6: done
+		return true;
+	}
+}
+#endif /* USE_SYSTICK_DELAY */

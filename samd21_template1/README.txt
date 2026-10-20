@@ -8,7 +8,9 @@ EDBG firmware: 0x03.0x25, build 438 (Sep  4 2017 14:48:36)
 PERIPHERAL AND PIN MAP
 ======================
 
-SERCOM4 - USB-UART adapter #1   TX = PB10 (PAD2)  RX = PB11 (PAD3)  BAUD = 115200
+SERCOM3 - CONSOLE = EDBG virtual COM (USB debug cable)  TX = PA22 (PAD0)  RX = PA23 (PAD1)  function C  BAUD = 115200
+          The EDBG forwards data only when the PC sets DTR (PuTTY does by default)
+SERCOM4 - USB-UART / HC-05 (driver only)   TX = PB10 (PAD2)  RX = PB11 (PAD3)  BAUD = 115200
 SERCOM2 - USB-UART adapter #2   TX = PA10 (PAD2)  RX = PA11 (PAD3)  BAUD = 9600
 
 USART BAUD register values (arithmetic mode, 48 MHz):
@@ -27,10 +29,10 @@ USART BAUD register values (arithmetic mode, 48 MHz):
 SERCOM0 - I2C master (PCF8574 / LCD / general I2C)
   SDA = PA08 (PAD0)  SCL = PA09 (PAD1)  ~400 kHz
 
-SERCOM3 - SPI master (TFT ST7735, TX only)  12 MHz
+SERCOM1 - SPI master (TFT ST7735, TX only)  12 MHz
 SERCOM5 - SPI master (external SST26 flash)  12 MHz
 
-TFT:   MOSI=PA18 SCK=PA19 (SERCOM3 PAD2/PAD3, function D; TX only, no MISO)
+TFT:   MOSI=PA18 SCK=PA19 (SERCOM1 PAD2/PAD3, function C; TX only, no MISO)
        CS=PA17 DC=PB15 RESET=PA16 (GPIO, see tft.h)
 Flash: SERCOM5 MOSI=PB22 (PAD2, D) SCK=PB23 (PAD3, D) MISO=PB16 (PAD0, C)
        CS=PA13 (GPIO)
@@ -64,7 +66,7 @@ Backend codes (the last argument of print()):
   1 = TFT
   2 = LCD
   3 = USART2
-  4 = USART4
+  4 = USART3 (console, EDBG virtual COM)
   5 = SPI flash dynamic packer
 
 Basic use:   print("text", backend);   print("Value=%u", value, backend);
@@ -131,7 +133,7 @@ Project and machine specific items
 tasks.json
   -f ...\Debug\samd21_template1.hex  project name
   -d ATSAMD21J18A                     device
-  -s ATML2130062700000156             EDBG serial number, depends on the board
+  -s <EDBG-serial>                    EDBG serial number of your board
                                       (find it with: atprogram.exe list)
   Other paths use the ${workspaceFolder} variable.
 

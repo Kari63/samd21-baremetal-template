@@ -56,6 +56,34 @@ void pcf8574_setoutputs(uint8_t deviceid, const uint8_t *data, uint8_t count)
 	i2c_stop();
 }
 
+/* Any number of states in one I2C frame. USE_I2C_DMA and count <= 255: in
+   the background, returns false if the previous write is still running
+   (nothing sent, the copy unchanged); data must stay unchanged until
+   i2c_dma_busy() is false. Otherwise polled. */
+bool pcf8574_write_frame(uint8_t deviceid, const uint8_t *data, uint16_t count)
+{
+	if (deviceid >= PCF8574_MAXDEVICES || count == 0) {
+		return false;
+	}
+	const uint8_t addr = PCF8574_ADDRBASE + deviceid;
+#if USE_I2C_DMA
+	if (count <= 255u) {
+		if (!i2c_write_dma(addr, data, (uint8_t)count)) {
+			return false;
+		}
+		pcf8574_out[deviceid] = data[count - 1];
+		return true;
+	}
+#endif
+	i2c_start_write(addr);
+	for (uint16_t i = 0; i < count; i++) {
+		i2c_write(data[i]);
+	}
+	i2c_stop();
+	pcf8574_out[deviceid] = data[count - 1];
+	return true;
+}
+
 /* Returns the last written output state (no bus traffic). */
 uint8_t pcf8574_getoutput(uint8_t deviceid)
 {

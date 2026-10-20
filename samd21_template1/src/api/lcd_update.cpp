@@ -46,7 +46,7 @@ void LCD_update()
 	#endif
 	
 	
-	#if EXAMPLE_SELECT == EXAMPLE_NONE
+	#if EXAMPLE_SELECT == EXAMPLE_NONE | EXAMPLE_TFT_STRESS
 	RTC_Time_t current_time = rtc_read_time();
 	print("%02u:%02u:%02u\n", (uint32_t)current_time.hour,
 		(uint32_t)current_time.minute, (uint32_t)current_time.second, 2);
@@ -58,7 +58,8 @@ void LCD_update()
 	//	print("%02X %02X %02X %02X\n", sst26_prog_rx[0],sst26_prog_rx[1],sst26_prog_rx[2],sst26_prog_rx[3],2);
 
 	// Periodic full refresh: repairs characters corrupted by a disturbance
-	// that the difference check cannot see. ~5 ms once per LCD_FULL_REFRESH_UPDATES rounds.
+	// that the difference check cannot see. Once per LCD_FULL_REFRESH_UPDATES
+	// rounds, 2 x 85 states = ~3.9 ms on the bus (polled: CPU waits that long).
 	static uint8_t refresh_count;
 	if (++refresh_count >= LCD_FULL_REFRESH_UPDATES) {
 		refresh_count = 0;
@@ -73,7 +74,8 @@ void LCD_update()
 // (same iteration) is excluded from the loop-time min/max measurement.
 void lcd_softirq_handler(void)
 {
-#if USE_TC6
+#if USE_TC6 && !USE_I2C_DMA
+	// USE_I2C_DMA: the flush runs in the background, the round stays in the measurement
 	tc6_ignore_next_interval();
 #endif
 	LCD_update();

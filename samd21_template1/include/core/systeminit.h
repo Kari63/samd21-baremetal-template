@@ -23,6 +23,7 @@ void tc7_init();
 void flash_init();
 void sercom0_init();
 void sercom2_init();
+void sercom1_init();
 void sercom3_init();
 void sercom4_init();
 void sercom5_init();

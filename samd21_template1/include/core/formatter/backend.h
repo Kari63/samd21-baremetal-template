@@ -25,9 +25,9 @@ void lcd_puts(const char *s);
 void usart2_write_char(std::uint8_t c);
 void usart2_write_string(const char *s);
 
-// usart4 / USART4 (if used)
-void usart4_write_char(const char *s);
-void usart4_write_string(const char *s);
+// usart3 / USART3 = console (EDBG virtual COM)
+void usart3_write_char(std::uint8_t c);
+void usart3_write_string(const char *s);
 
 
 

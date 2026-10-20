@@ -13,7 +13,7 @@
 #if USE_TFT
 
 #include "tft.h"
-#include "spi3.h"
+#include "spi1.h"
 #include "systick.h"  // provides delay_ms
 #include <stdlib.h>   // provides abs, malloc etc.
 #include <string.h>
@@ -110,8 +110,16 @@ static const uint8_t Icmd[] = {
 	0x3F, 0x40, 0x38, 0x40, 0x3F, // W
 	0x63, 0x14, 0x08, 0x14, 0x63, // X
 	0x07, 0x08, 0x70, 0x08, 0x07, // Y
-	0x61, 0x51, 0x49, 0x45, 0x43  // Z
+	0x61, 0x51, 0x49, 0x45, 0x43, // Z
+	/* Punctuation (indexes 36..41), same bitmaps as the classic 5x7 font */
+	0x00, 0x60, 0x60, 0x00, 0x00, // .
+	0x00, 0x36, 0x36, 0x00, 0x00, // :
+	0x08, 0x08, 0x08, 0x08, 0x08, // -
+	0x23, 0x13, 0x08, 0x64, 0x62, // %
+	0x20, 0x10, 0x08, 0x04, 0x02, // /
+	0x08, 0x08, 0x3E, 0x08, 0x08  // +
 };
+static const char font5x7_punct[] = ".:-%/+";   /* glyphs 36.. in this order */
 
 // --- LOW-LEVEL HARDWARE SYNC FUNCTIONS ---
 
@@ -120,36 +128,36 @@ void SPI_startWrite(void) {
 }
 
 void SPI_endWrite(void) {
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC); 
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC); 
 	SPI_TFT_CS_HIGH();
 }
 
 void TFT_writeCommand(uint8_t cmd) {
 	SPI_DC_LOW_CMD();
-	spi3_transmit(cmd);
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC); 
+	spi1_transmit(cmd);
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC); 
 	SPI_DC_HIGH_DATA();
 }
 
 void TFT_writeData(uint8_t data) {
 	SPI_DC_HIGH_DATA();
-	spi3_transmit(data);
+	spi1_transmit(data);
 }
 
 void SPI_transmit(uint32_t data, uint8_t data_size) {
 	switch(data_size) {
 		case 8:
-			spi3_transmit((uint8_t)data);
+			spi1_transmit((uint8_t)data);
 			break;
 		case 16:
-			spi3_transmit((uint8_t)(data >> 8));
-			spi3_transmit((uint8_t)data);
+			spi1_transmit((uint8_t)(data >> 8));
+			spi1_transmit((uint8_t)data);
 			break;
 		case 32:
-			spi3_transmit((uint8_t)(data >> 24));
-			spi3_transmit((uint8_t)(data >> 16));
-			spi3_transmit((uint8_t)(data >> 8));
-			spi3_transmit((uint8_t)data);
+			spi1_transmit((uint8_t)(data >> 24));
+			spi1_transmit((uint8_t)(data >> 16));
+			spi1_transmit((uint8_t)(data >> 8));
+			spi1_transmit((uint8_t)data);
 			break;
 	}
 }
@@ -158,7 +166,7 @@ void TFT_sendBulkCommand(uint8_t commandByte, const uint8_t *dataBytes, uint8_t 
 	SPI_startWrite();
 	TFT_writeCommand(commandByte);
 	for (uint8_t i = 0; i < numDataBytes; i++) {
-		spi3_transmit(*dataBytes++);
+		spi1_transmit(*dataBytes++);
 	}
 	SPI_endWrite();
 }
@@ -170,19 +178,19 @@ void TFT_setAddrWindow(uint16_t x, uint16_t y, uint16_t w, uint16_t h) {
 	uint16_t y_end = y_start + h - 1;
 
 	TFT_writeCommand(ST7735_CASET);
-	spi3_transmit(x_start >> 8);   while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(x_start & 0xFF); while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(x_end >> 8);     while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(x_end & 0xFF);   while (!SERCOM3->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(x_start >> 8);   while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(x_start & 0xFF); while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(x_end >> 8);     while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(x_end & 0xFF);   while (!SERCOM1->SPI.INTFLAG.bit.DRE);
 
 	TFT_writeCommand(ST7735_RASET);
-	spi3_transmit(y_start >> 8);   while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(y_start & 0xFF); while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(y_end >> 8);     while (!SERCOM3->SPI.INTFLAG.bit.DRE);
-	spi3_transmit(y_end & 0xFF);   while (!SERCOM3->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(y_start >> 8);   while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(y_start & 0xFF); while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(y_end >> 8);     while (!SERCOM1->SPI.INTFLAG.bit.DRE);
+	spi1_transmit(y_end & 0xFF);   while (!SERCOM1->SPI.INTFLAG.bit.DRE);
 
 	TFT_writeCommand(ST7735_RAMWR);
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC); // full sync before the data stream
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC); // full sync before the data stream
 }
 
 
@@ -198,35 +206,39 @@ static void TFT_writePixel_internal(int16_t x, int16_t y, uint16_t color) {
 	// Set the address window only if the coordinate is valid (0-159 and 0-127)
 	TFT_setAddrWindow(x, y, 1, 1);
 	
-	spi3_transmit(color >> 8);
-	spi3_transmit(color & 0xFF);
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC);
+	spi1_transmit(color >> 8);
+	spi1_transmit(color & 0xFF);
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC);
 }
 
 
 
 static void TFT_drawVLine_internal(int16_t x, int16_t y, int16_t h, uint16_t color) {
-	if ((x >= _width) || (y >= _height)) return;
+	if ((x < 0) || (x >= _width)) return;
+	if (y < 0) { h += y; y = 0; }
 	if (y + h > _height) h = _height - y;
+	if (h <= 0) return;
 	uint8_t ch = color >> 8;
 	uint8_t cl = color & 0xFF;
 	TFT_setAddrWindow(x, y, 1, h);
 	while (h--) {
-		spi3_transmit_stream(ch);
-		spi3_transmit_stream(cl);
+		spi1_transmit_stream(ch);
+		spi1_transmit_stream(cl);
 	}
 }
 
 
 static void TFT_drawHLine_internal(int16_t x, int16_t y, int16_t w, uint16_t color) {
-	if ((x >= _width) || (y >= _height)) return;
+	if ((y < 0) || (y >= _height)) return;
+	if (x < 0) { w += x; x = 0; }
 	if (x + w > _width) w = _width - x;
+	if (w <= 0) return;
 	uint8_t ch = color >> 8;
 	uint8_t cl = color & 0xFF;
 	TFT_setAddrWindow(x, y, w, 1);
 	while (w--) {
-		spi3_transmit_stream(ch);
-		spi3_transmit_stream(cl);
+		spi1_transmit_stream(ch);
+		spi1_transmit_stream(cl);
 	}
 }
 
@@ -240,11 +252,11 @@ void TFT_writePixel(int16_t x, int16_t y, uint16_t color) {
 
 void TFT_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
 	// 1. Fast signed range check up front
-	if ((x >= _width) || (y >= _height)) return;
-	if ((x + w - 1) < 0) return;
-	if ((y + h - 1) < 0) return;
+	if (x < 0) { w += x; x = 0; }
+	if (y < 0) { h += y; y = 0; }
 	if ((x + w) > _width)  w = _width  - x;
 	if ((y + h) > _height) h = _height - y;
+	if ((w <= 0) || (h <= 0)) return;
 
 	uint8_t color_high = color >> 8;
 	uint8_t color_low = color & 0xFF;
@@ -256,8 +268,8 @@ void TFT_fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color) {
 
 	
 	while (num_pixels--) {
-		spi3_transmit(color_high);
-		spi3_transmit(color_low);
+		spi1_transmit(color_high);
+		spi1_transmit(color_low);
 	}
 
 	
@@ -464,14 +476,18 @@ void TFT_fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, ui
 	uint8_t color_low = color & 0xFF;
 	
 	// 1. Dimensions of the center part
-	uint16_t tw = w - 2 * r;
-	uint16_t th = h;
-	uint32_t num_pixels = (uint32_t)tw * th;
+	int16_t tx = x + r, ty = y;
+	int16_t tw = w - 2 * r, th = h;
+	if (tx < 0) { tw += tx; tx = 0; }
+	if (ty < 0) { th += ty; ty = 0; }
+	if (tx + tw > _width)  tw = _width  - tx;
+	if (ty + th > _height) th = _height - ty;
+	uint32_t num_pixels = ((tw > 0) && (th > 0)) ? (uint32_t)tw * th : 0;
 	
-	TFT_setAddrWindow(x + r, y, tw, th);
+	if (num_pixels) TFT_setAddrWindow(tx, ty, tw, th);
 	while(num_pixels--) {
-		spi3_transmit_stream(color_high);
-		spi3_transmit_stream(color_low);
+		spi1_transmit_stream(color_high);
+		spi1_transmit_stream(color_low);
 	}
 
 	// 2. Corner centers are computed into separate variables.
@@ -595,50 +611,79 @@ void TFT_drawMonochromeBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int1
 }
 
 
+// Bitmap clipping: (x, y, cw, ch) = the part that fits on the screen,
+// (bx, by) = its top-left corner inside the bitmap. false = nothing on screen.
+static bool clip_bitmap(int16_t *x, int16_t *y, int16_t w, int16_t h,
+                        int16_t *bx, int16_t *by, int16_t *cw, int16_t *ch) {
+	*bx = 0; *by = 0; *cw = w; *ch = h;
+	if (*x < 0) { *cw += *x; *bx = -*x; *x = 0; }
+	if (*y < 0) { *ch += *y; *by = -*y; *y = 0; }
+	if (*x + *cw > _width)  *cw = _width  - *x;
+	if (*y + *ch > _height) *ch = _height - *y;
+	return (*cw > 0) && (*ch > 0);
+}
+
 void TFT_drawGrayscaleBitmap(int16_t x, int16_t y, const uint8_t bitmap[], int16_t w, int16_t h) {
+	int16_t bx, by, cw, ch;
+	if (!clip_bitmap(&x, &y, w, h, &bx, &by, &cw, &ch)) return;
+
 	SPI_startWrite();
-	TFT_setAddrWindow(x, y, w, h);
-	for (int32_t i = 0; i < (w * h); i++) {
-		uint8_t v = bitmap[i];
-		uint16_t color = rgbConvert24to16(((uint32_t)v << 16) | ((uint32_t)v << 8) | v);
-		spi3_transmit(color >> 8);
-		spi3_transmit(color & 0xFF);
+	TFT_setAddrWindow(x, y, cw, ch);
+	for (int16_t j = 0; j < ch; j++) {
+		const uint8_t *row = &bitmap[(int32_t)(by + j) * w + bx];
+		for (int16_t i = 0; i < cw; i++) {
+			uint8_t v = row[i];
+			uint16_t color = rgbConvert24to16(((uint32_t)v << 16) | ((uint32_t)v << 8) | v);
+			spi1_transmit(color >> 8);
+			spi1_transmit(color & 0xFF);
+		}
 	}
 	SPI_endWrite();
 }
 
 void TFT_drawRGBBitmap(int16_t x, int16_t y, const uint16_t bitmap[], int16_t w, int16_t h) {
-	// Range check: reject the image if it is completely off-screen
-	if ((x >= _width) || (y >= _height) || ((x + w - 1) < 0) || ((y + h - 1) < 0)) return;
-
-	uint32_t num_pixels = (uint32_t)w * h;
-	uint32_t pixel_index = 0;
+	// Clip all edges: without it the ST7735 wraps an image crossing the edge incorrectly
+	int16_t bx, by, cw, ch;
+	if (!clip_bitmap(&x, &y, w, h, &bx, &by, &cw, &ch)) return;
 
 	// Keep the SPI bus open for the whole image transfer
 	SPI_startWrite();
 	
 	// One address window covering the whole image
-	TFT_setAddrWindow(x, y, w, h);
+	TFT_setAddrWindow(x, y, cw, ch);
 	
-	// Stream the color bytes straight from the flash table into SERCOM3
-	while (num_pixels--) {
-		uint16_t color = bitmap[pixel_index++];
-		uint8_t color_high = color >> 8;
-		uint8_t color_low = color & 0xFF;
-		
-		spi3_transmit_stream(color_high);
-		spi3_transmit_stream(color_low);
+	// Stream the color bytes straight from the flash table into SERCOM1
+	for (int16_t j = 0; j < ch; j++) {
+		const uint16_t *row = &bitmap[(int32_t)(by + j) * w + bx];
+		for (int16_t i = 0; i < cw; i++) {
+			uint16_t color = row[i];
+			spi1_transmit_stream(color >> 8);
+			spi1_transmit_stream(color & 0xFF);
+		}
 	}
 	
 	// Wait until the last bit has left the wire before closing the bus
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC);
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC);
 	SPI_endWrite();
 }
 
 
 // --- PART 3/3: FONT, TEXT, GETTERS AND INITIALIZATION ---
 
-void TFT_setFont(const GFXfont *f) { gfxFont = f; }
+// GFXfont: largest height above the baseline (max -yOffset). The opaque text
+// cell starts this many rows above the baseline and is yAdvance rows high.
+static uint8_t gfx_ascent = 0;
+
+void TFT_setFont(const GFXfont *f) {
+	gfxFont = f;
+	gfx_ascent = 0;
+	if (f) {
+		for (uint16_t i = 0; i <= (uint16_t)(f->last - f->first); i++) {
+			const int16_t up = -f->glyph[i].yOffset;
+			if (up > gfx_ascent) gfx_ascent = (uint8_t)up;
+		}
+	}
+}
 void TFT_setFontBold(bool bold)    { (void)bold; }
 
 void TFT_setFontSize(uint8_t size_x, uint8_t size_y) {
@@ -646,7 +691,9 @@ void TFT_setFontSize(uint8_t size_x, uint8_t size_y) {
 	textsize_y = (size_y > 0) ? size_y : 1;
 }
 
-void TFT_setFontColor(uint16_t color) { textcolor = color; textbg = color; }
+// Text is always opaque: every pixel of the character cell is written,
+// either textcolor or textbg. New text covers the old one, no fillRect first.
+void TFT_setFontColor(uint16_t color) { textcolor = color; }
 	
 void TFT_setBackgroundColor(uint16_t color) { textbg = color; }
 	
@@ -717,31 +764,33 @@ void TFT_setRotation(uint8_t m) {
 	rotation = m % 4;
 	SPI_startWrite();
 	TFT_writeCommand(ST7735_MADCTL);
+	// The panel is natively portrait 128 x 160 (CASET 0-127, RASET 0-159), MV turns it landscape.
+	// DISPLAY_WIDTH/HEIGHT are the landscape size (160 x 128): 0/2 = portrait, 1/3 = landscape.
 	switch (rotation) {
 		case 0:
 		// transfer (not transmit) keeps the SPI state consistent
-		spi3_transmit(ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_RGB_FILTER);
-		_width  = DISPLAY_WIDTH; _height = DISPLAY_HEIGHT;
+		spi1_transmit(ST7735_MADCTL_MX | ST7735_MADCTL_MY | ST7735_RGB_FILTER);
+		_width  = DISPLAY_HEIGHT; _height = DISPLAY_WIDTH;
 		break;
 		case 1:
 		// transfer (not transmit) keeps the SPI state consistent
-		spi3_transmit(ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_RGB_FILTER);
-		_width  = DISPLAY_HEIGHT; _height = DISPLAY_WIDTH;
+		spi1_transmit(ST7735_MADCTL_MY | ST7735_MADCTL_MV | ST7735_RGB_FILTER);
+		_width  = DISPLAY_WIDTH; _height = DISPLAY_HEIGHT;
 		break;
 		case 2:
 		// transfer (not transmit) keeps the SPI state consistent
-		spi3_transmit(ST7735_RGB_FILTER);
-		_width  = DISPLAY_WIDTH; _height = DISPLAY_HEIGHT;
+		spi1_transmit(ST7735_RGB_FILTER);
+		_width  = DISPLAY_HEIGHT; _height = DISPLAY_WIDTH;
 		break;
 		case 3:
 		// transfer (not transmit) keeps the SPI state consistent
-		spi3_transmit(ST7735_MADCTL_MX | ST7735_MADCTL_MV | ST7735_RGB_FILTER);
-		_width  = DISPLAY_HEIGHT; _height = DISPLAY_WIDTH;
+		spi1_transmit(ST7735_MADCTL_MX | ST7735_MADCTL_MV | ST7735_RGB_FILTER);
+		_width  = DISPLAY_WIDTH; _height = DISPLAY_HEIGHT;
 		break;
 	}
 	
 	// Wait until the rotation byte has completely left the wire
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC);
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC);
 	
 	// Only now may CS be raised
 	SPI_endWrite();
@@ -795,14 +844,14 @@ void TFT_displayInit(void) {
 		
 		// Send the command (DC low)
 		SPI_DC_LOW_CMD();
-		spi3_transmit(cmd);
-		while (!SERCOM3->SPI.INTFLAG.bit.TXC); // wait until the command is sent
+		spi1_transmit(cmd);
+		while (!SERCOM1->SPI.INTFLAG.bit.TXC); // wait until the command is sent
 		
 		// Send the arguments (DC high = data)
 		SPI_DC_HIGH_DATA();
 		for (uint8_t i = 0; i < numArgs; i++) {
-			spi3_transmit(*addr++);
-			while (!SERCOM3->SPI.INTFLAG.bit.TXC); // wait for each argument
+			spi1_transmit(*addr++);
+			while (!SERCOM1->SPI.INTFLAG.bit.TXC); // wait for each argument
 		}
 		
 		// If the delay bit was set, read the delay length and wait
@@ -815,12 +864,12 @@ void TFT_displayInit(void) {
 	
 
 	// 1. Wait until the last argument has completely left the SERCOM
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC);
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC);
 
 	// 2. Force D/C low (command mode) before CS rises.
 	// This prevents the display from taking a glitch on the CS edge as a color byte.
 	SPI_DC_LOW_CMD();
-	while (!SERCOM3->SPI.INTFLAG.bit.TXC); // make sure D/C has settled in hardware
+	while (!SERCOM1->SPI.INTFLAG.bit.TXC); // make sure D/C has settled in hardware
 
 	// 3. Release the bus and raise CS
 	SPI_TFT_CS_HIGH();
@@ -830,20 +879,68 @@ void TFT_displayInit(void) {
 }
 
 
+/* Opaque text cell: ONE address window for the whole character cell and every
+ * pixel streamed as textcolor or textbg (ST7735 auto-increments inside the
+ * window). Old text is covered in the same write: no fillRect first, no flicker.
+ * One window = 11 bytes, then 2 bytes per pixel (per-pixel windows: 13 bytes
+ * per pixel). bit() gets the unscaled font coordinate inside the cell.
+ * Clipped to the screen. CS is handled here (SPI_startWrite / SPI_endWrite). */
+typedef bool (*cell_bit_fn)(int16_t fx, int16_t fy);
+
+static void draw_text_cell(int16_t x, int16_t y, int16_t w, int16_t h, cell_bit_fn bit) {
+	const int16_t x0 = (x < 0) ? 0 : x;
+	const int16_t y0 = (y < 0) ? 0 : y;
+	const int16_t x1 = (x + w > _width)  ? _width  : (int16_t)(x + w);
+	const int16_t y1 = (y + h > _height) ? _height : (int16_t)(y + h);
+	if ((x0 >= x1) || (y0 >= y1)) return;
+
+	// Font coordinate as running counters: the M0+ has no divide instruction,
+	// so the division runs once per cell and row start only.
+	int16_t fy = (y0 - y) / textsize_y, ry = (y0 - y) % textsize_y;
+	const int16_t fx0 = (x0 - x) / textsize_x, rx0 = (x0 - x) % textsize_x;
+
+	SPI_startWrite();
+	TFT_setAddrWindow(x0, y0, x1 - x0, y1 - y0);
+	for (int16_t py = y0; py < y1; py++) {
+		int16_t fx = fx0, rx = rx0;
+		for (int16_t px = x0; px < x1; px++) {
+			const uint16_t color = bit(fx, fy) ? textcolor : textbg;
+			spi1_transmit_stream(color >> 8);
+			spi1_transmit_stream(color & 0xFF);
+			if (++rx == textsize_x) { rx = 0; fx++; }
+		}
+		if (++ry == textsize_y) { ry = 0; fy++; }
+	}
+	SPI_endWrite();
+}
+
+// Glyph of the current cell (set by TFT_drawChar before draw_text_cell)
+static const uint8_t  *cell_5x7;        // 5 column bytes, bit 0 = top row; nullptr = blank
+static const GFXglyph *cell_glyph;
+
+// Default font cell 6 x 8: columns 0..4 from the font, column 5 = character spacing
+static bool bit_5x7(int16_t fx, int16_t fy) {
+	return cell_5x7 && (fx < 5) && ((cell_5x7[fx] >> fy) & 1u);
+}
+
+// GFXfont cell xAdvance x yAdvance: x from the cursor, y from baseline - gfx_ascent.
+// Glyph bits are one continuous MSB-first stream, width bits per row.
+static bool bit_gfx(int16_t fx, int16_t fy) {
+	const int16_t gx = fx - cell_glyph->xOffset;
+	const int16_t gy = fy - gfx_ascent - cell_glyph->yOffset;
+	if ((gx < 0) || (gx >= cell_glyph->width) || (gy < 0) || (gy >= cell_glyph->height)) return false;
+	const uint16_t n = (uint16_t)(gy * cell_glyph->width + gx);
+	return (gfxFont->bitmap[cell_glyph->bitmapOffset + (n >> 3)] << (n & 7u)) & 0x80u;
+}
+
 uint8_t TFT_drawChar(int16_t x, int16_t y, unsigned char c) {
 
 	if (!gfxFont) {
 		if ((x >= _width) || (y >= _height) || ((x + 6 * textsize_x - 1) < 0) || ((y + 8 * textsize_y - 1) < 0))
 		return 6 * textsize_x;
 
-		// Hardening: for a plain space, skip the font lookup
-		// and return the character width directly (blank cell)
-		if (c == ' ') {
-			return 6 * textsize_x;
-		}
-
 		uint16_t font_index = 0;
-		
+
 		if (c >= '0' && c <= '9') {
 			font_index = c - '0';        // digits start at index 0
 			} else if (c >= 'A' && c <= 'Z') {
@@ -852,49 +949,46 @@ uint8_t TFT_drawChar(int16_t x, int16_t y, unsigned char c) {
 			font_index = (c - 'a') + 10; // lower case is mapped to upper case
 			} else {
 			font_index = 0;              // unknown characters are printed as zero
-		}
-		
-		for (int8_t i = 0; i < 5; i++) {
-			uint8_t line = font5x7[font_index * 5 + i];
-			for (int8_t j = 0; j < 8; j++, line >>= 1) {
-				if (line & 0x01) {
-					if (textsize_x == 1 && textsize_y == 1) TFT_writePixel_internal(x + i, y + j, textcolor);
-					else                                   TFT_fillRect(x + (i * textsize_x), y + (j * textsize_y), textsize_x, textsize_y, textcolor);
-					} else if (textbg != textcolor) {
-					if (textsize_x == 1 && textsize_y == 1) TFT_writePixel_internal(x + i, y + j, textbg);
-					else                                   TFT_fillRect(x + (i * textsize_x), y + (j * textsize_y), textsize_x, textsize_y, textbg);
+			for (uint8_t k = 0; font5x7_punct[k] != '\0'; k++) {
+				if (c == (unsigned char)font5x7_punct[k]) {
+					font_index = 36 + k; // . : - % / +
+					break;
 				}
 			}
 		}
+
+		// Space = blank cell: it erases the old character
+		cell_5x7 = (c == ' ') ? nullptr : &font5x7[font_index * 5];
+		draw_text_cell(x, y, 6 * textsize_x, 8 * textsize_y, bit_5x7);
 		return 6 * textsize_x;
 	}
-	else {  
-		// Custom font (GFXfont) path
+	else {
 		if ((c < gfxFont->first) || (c > gfxFont->last)) return 0;
-		c -= gfxFont->first;
-		GFXglyph *glyph = &(((GFXglyph *)gfxFont->glyph)[c]);
-		uint8_t *bitmap = (uint8_t *)gfxFont->bitmap;
-		uint16_t bo = glyph->bitmapOffset;
-		uint8_t w = glyph->width, h = glyph->height;
-		int8_t xo = glyph->xOffset, yo = glyph->yOffset;
-		uint8_t xx, yy, bits = 0, bit = 0;
-		int16_t xo16 = xo, yo16 = yo;
+		cell_glyph = &gfxFont->glyph[c - gfxFont->first];
 
-		for (yy = 0; yy < h; yy++) {
-			for (xx = 0; xx < w; xx++) {
-				if (!(bit & 7)) bits = bitmap[bo++];
-				bit++;
-				if (bits & 0x80) {
+		const int16_t adv = cell_glyph->xAdvance;
+		draw_text_cell(x, y - gfx_ascent * textsize_y,
+		               adv * textsize_x, gfxFont->yAdvance * textsize_y, bit_gfx);
+
+		// Pixels outside the cell columns (FreeSans '_', some bold glyphs: 1 column)
+		// are drawn transparently on top, as before.
+		const int16_t xo = cell_glyph->xOffset, w = cell_glyph->width;
+		if ((xo < 0) || (xo + w > adv)) {
+			const int16_t yo = cell_glyph->yOffset, h = cell_glyph->height;
+			for (int16_t gy = 0; gy < h; gy++) {
+				for (int16_t gx = 0; gx < w; gx++) {
+					const int16_t fx = xo + gx;
+					if ((fx >= 0) && (fx < adv)) continue;
+					if (!bit_gfx(fx, gfx_ascent + yo + gy)) continue;
 					if (textsize_x == 1 && textsize_y == 1) {
-						TFT_writePixel(x + xo + xx, y + yo + yy, textcolor);
-						} else {
-						TFT_fillRect(x + (xo16 + xx) * textsize_x, y + (yo16 + yy) * textsize_y, textsize_x, textsize_y, textcolor);
+						TFT_writePixel(x + fx, y + yo + gy, textcolor);
+					} else {
+						TFT_fillRect(x + fx * textsize_x, y + (yo + gy) * textsize_y, textsize_x, textsize_y, textcolor);
 					}
 				}
-				bits <<= 1;
 			}
 		}
-		return glyph->xAdvance * textsize_x;
+		return adv * textsize_x;
 	}
 }
 

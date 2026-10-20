@@ -14,11 +14,19 @@
 /* ------------------------------------------------------------------------- */
 /* Template identity (printed in the boot banner)                            */
 /* ------------------------------------------------------------------------- */
-#define TEMPLATE_NAME            "samd21j18_template"
+/* The parallel project samd21_template is the DMA-free reference: the name
+ * and the variant tell the two apart in the console output.                */
+#define TEMPLATE_NAME            "samd21_template1"
+#define TEMPLATE_VARIANT         "ADC+DMA"
 #define TEMPLATE_VERSION_MAJOR   0
-#define TEMPLATE_VERSION_MINOR   9
+#define TEMPLATE_VERSION_MINOR   10
 #define TEMPLATE_VERSION_PATCH   0
-#define TEMPLATE_VERSION_STRING  "0.9.0"
+
+#define TEMPLATE_STR_(x)         #x
+#define TEMPLATE_STR(x)          TEMPLATE_STR_(x)
+#define TEMPLATE_VERSION_STRING  TEMPLATE_STR(TEMPLATE_VERSION_MAJOR) "." \
+                                 TEMPLATE_STR(TEMPLATE_VERSION_MINOR) "." \
+                                 TEMPLATE_STR(TEMPLATE_VERSION_PATCH)
 
 /* ------------------------------------------------------------------------- */
 /* Feature switches: 1 = initialize and use the module, 0 = leave it idle.  */
@@ -32,9 +40,11 @@
 
 /* Communication */
 #define USE_UART2            1   /* SERCOM2 USART mode						   */
-#define USE_UART4            1   /* SERCOM4 USART mode                         */         
+#define USE_UART3            1   /* SERCOM3 USART: console, EDBG virtual COM    */
+#define USE_UART4            1   /* SERCOM4 USART: HC-05 (driver only)          */         
 #define USE_SPI              1   /* SERCOM5 SPI mode for external flash        */
 #define USE_I2C              1   /* SERCOM0 I2C mode                           */
+#define USE_I2C_DMA          1   /* SERCOM0 TX on DMAC ch 6, LCD flush in bg   */
 
 /* Timers / events / DMA */
 #define USE_TC3              1   /* ADC sampling timer                          */
@@ -57,26 +67,24 @@
 
 /* Drivers / board peripherals */
 #define USE_QSPI_FLASH       0   /* SST26VF/WF - read the SST26 notes in README.md first! */
-#define USE_TFT              1   /* ST7735 128x160 on SERCOM3 SPI               */
+#define USE_TFT              1   /* ST7735 128x160 on SERCOM1 SPI (PA18/PA19)    */
 #define USE_TFT_DMA          1   /* DMA accelerated TFT fills                    */
 #define USE_LCD              1   /* HD44780 via PCF8574 on I2C                   */
-#define USE_DHT20            0   /* DHT20 temperature/humidity sensor            */
+#define USE_DHT20            1   /* DHT20 temperature/humidity, I2C 0x38 (Grove)  */
+#define USE_BMP280           1   /* BMP280 temperature/pressure, I2C 0x77 (Grove) */
 #define USE_DRV8833          1   /* DRV8833 motor driver on TCC0                  */
 
 
 
 /* ------------------------------------------------------------------------- */
 /* Debug / diagnostics                                                       */
+/* HardFault: the startup handler stores PC/LR/SP/xPSR/ICSR in globals and   */
+/* stops; read them with the debugger (pause, Watch window).                 */
 /* ------------------------------------------------------------------------- */
-#define DEBUG_PRINT           1   /* printf-style output over debug UART      */
-#define PRINT_BOOT_BANNER     1   /* name, version, build date at startup     */
-#define PRINT_RESET_CAUSE     1   /* decode RCAUSE at startup                 */
-#define HARDFAULT_DUMP        1   /* print PC/LR/SP/xPSR on HardFault         */
-#define WDT_ENABLE            0   /* watchdog off by default                  */
-#define DEBUG_PINS            0   /* toggle GPIO pins for scope timing        */
+#define PRINT_BOOT_BANNER     1   /* name, variant, version, build date on USART3 */
 
-#if (PRINT_BOOT_BANNER || PRINT_RESET_CAUSE || HARDFAULT_DUMP) && !(DEBUG_PRINT && USE_UART4)
-#error "Boot/fault diagnostics need DEBUG_PRINT and USE_UART4"
+#if PRINT_BOOT_BANNER && !USE_UART3
+#error "PRINT_BOOT_BANNER requires USE_UART3"
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -92,9 +100,11 @@
 #define EXAMPLE_DMA_RAM                5
 #define EXAMPLE_QSPI_FLASH_TEST        6
 #define EXAMPLE_QSPI_DYN_PACKER        7
+#define EXAMPLE_TFT_CLOCK_ADC          8   /* RTC clock + ADC on the TFT, no flicker */
+#define EXAMPLE_TFT_WEATHER            9   /* clock + DHT20 T/RH + BMP280 P on the TFT */
 
 
-#define EXAMPLE_SELECT     0          //  EXAMPLE_TFT_STRESS
+#define EXAMPLE_SELECT                 EXAMPLE_TFT_WEATHER
 
 
 
@@ -118,6 +128,12 @@
 #endif
 #if EXAMPLE_SELECT == EXAMPLE_QSPI_DYN_PACKER && !USE_QSPI_FLASH
 #error "EXAMPLE_QSPI_DYN_PACKER requires USE_QSPI_FLASH"
+#endif
+#if EXAMPLE_SELECT == EXAMPLE_TFT_CLOCK_ADC && !(USE_TFT && USE_RTC && USE_ADC)
+#error "EXAMPLE_TFT_CLOCK_ADC requires USE_TFT, USE_RTC and USE_ADC"
+#endif
+#if EXAMPLE_SELECT == EXAMPLE_TFT_WEATHER && !(USE_TFT && USE_RTC && USE_DHT20 && USE_BMP280)
+#error "EXAMPLE_TFT_WEATHER requires USE_TFT, USE_RTC, USE_DHT20 and USE_BMP280"
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -150,6 +166,15 @@
 #endif
 #if USE_DHT20 && !USE_I2C
 #error "USE_DHT20 requires USE_I2C"
+#endif
+#if USE_BMP280 && !USE_I2C
+#error "USE_BMP280 requires USE_I2C"
+#endif
+#if (USE_DHT20 || USE_BMP280) && !USE_SYSTICK_DELAY
+#error "USE_DHT20 / USE_BMP280 require USE_SYSTICK_DELAY (SysTick ms, timeouts)"
+#endif
+#if USE_I2C_DMA && !(USE_I2C && USE_DMA && USE_SYSTICK_DELAY)
+#error "USE_I2C_DMA requires USE_I2C, USE_DMA and USE_SYSTICK_DELAY"
 #endif
 #if USE_DRV8833 && !USE_TCC0
 #error "USE_DRV8833 requires USE_TCC0"

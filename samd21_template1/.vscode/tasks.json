@@ -41,7 +41,7 @@
                 "-d",
                 "ATSAMD21J18A",
                 "-s",
-                "ATML2130062700000156",
+                "<EDBG-serial>",
                 "program",
                 "-f",
                 "${workspaceFolder}\\Debug\\samd21_template1.hex",

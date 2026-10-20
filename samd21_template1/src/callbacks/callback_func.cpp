@@ -51,8 +51,3 @@ void ac_onComp1Match()
 {	 
 	// gpio_toggle(LED);
 }
-
-void rtc_onCompMatch()
-{
-	
-}

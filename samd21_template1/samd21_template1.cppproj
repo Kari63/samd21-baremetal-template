@@ -96,6 +96,7 @@
             <Value>../include/hal/dma</Value>
             <Value>../include/drivers</Value>
             <Value>../include/drivers/dht20</Value>
+            <Value>../include/drivers/bmp280</Value>
             <Value>../include/drivers/drv8833</Value>
             <Value>../include/drivers/lcd</Value>
             <Value>../include/drivers/tft</Value>
@@ -192,6 +193,7 @@
             <Value>../include/hal/dma</Value>
             <Value>../include/drivers</Value>
             <Value>../include/drivers/dht20</Value>
+            <Value>../include/drivers/bmp280</Value>
             <Value>../include/drivers/drv8833</Value>
             <Value>../include/drivers/lcd</Value>
             <Value>../include/drivers/tft</Value>
@@ -311,7 +313,7 @@
     <Compile Include="include\hal\devif\spi5.h">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="include\hal\devif\spi3.h">
+    <Compile Include="include\hal\devif\spi1.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\hal\dma\dma.h">
@@ -345,6 +347,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\hal\usart\usart2.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\hal\usart\usart3.h">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="include\hal\usart\usart4.h">
@@ -473,6 +478,12 @@
     <Compile Include="examples\ex_tft_stress.cpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="examples\ex_tft_clock_adc.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="examples\ex_tft_weather.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="examples\ex_dma_ram.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -515,6 +526,12 @@
     <Compile Include="src\drivers\dht20\dht20.cpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\drivers\bmp280\bmp280.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="include\drivers\bmp280\bmp280.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\drivers\drv8833\drv8833.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -542,7 +559,7 @@
     <Compile Include="src\hal\devif\spi5.cpp">
       <SubType>compile</SubType>
     </Compile>
-    <Compile Include="src\hal\devif\spi3.cpp">
+    <Compile Include="src\hal\devif\spi1.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\hal\dma\dma.cpp">
@@ -578,6 +595,9 @@
     <Compile Include="src\hal\usart\usart2.cpp">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="src\hal\usart\usart3.cpp">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\hal\usart\usart4.cpp">
       <SubType>compile</SubType>
     </Compile>
@@ -603,6 +623,9 @@
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\hpl\sercom\sercom2_init.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\hpl\sercom\sercom1_init.cpp">
       <SubType>compile</SubType>
     </Compile>
     <Compile Include="src\hpl\sercom\sercom3_init.cpp">
@@ -651,6 +674,7 @@
     <Folder Include="include\core\scheduler" />
     <Folder Include="include\core\system_commands" />
     <Folder Include="include\drivers\dht20" />
+    <Folder Include="include\drivers\bmp280" />
     <Folder Include="include\drivers\lcd" />
     <Folder Include="include\drivers\drv8833" />
     <Folder Include="include\drivers\tft" />
@@ -682,6 +706,7 @@
     <Folder Include="src\core\system_commands" />
     <Folder Include="src\drivers" />
     <Folder Include="src\drivers\dht20" />
+    <Folder Include="src\drivers\bmp280" />
     <Folder Include="src\drivers\lcd" />
     <Folder Include="src\drivers\drv8833" />
     <Folder Include="src\drivers\tft" />

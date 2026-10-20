@@ -6,7 +6,7 @@
 #include "tft.h"
 #include "lcdpcf8574.h"
 #include "usart2.h"
-#include "usart4.h"
+#include "usart3.h"
 #include "samd21.h"
 #include "dyn_flash_formatter_write.h"
 
@@ -35,28 +35,13 @@ void fb_putc(uint8_t backend, char c)
 			uint8_t ch = static_cast<uint8_t>(c);
 
 			SPI_startWrite();
-			TFT_drawChar(cx, cy, ch);
+			uint8_t w = TFT_drawChar(cx, cy, ch);
 			SPI_endWrite();
 
-			// --- GFXfont compatible advance (WITHOUT scaling) ---
-			if (gfxFont)
-			{
-				if (ch >= gfxFont->first && ch <= gfxFont->last)
-				{
-					const GFXglyph *glyph = &gfxFont->glyph[ch - gfxFont->first];
-					TFT_setCursor(cx + glyph->xAdvance, cy);
-				}
-				else
-				{
-					// fallback monospace
-					TFT_setCursor(cx + 6, cy);
-				}
-			}
-			else
-			{
-				// default font (5x7)
-				TFT_setCursor(cx + 6, cy);
-			}
+			// drawChar returns the advance including the font size
+			// (default font 6 x size, GFXfont xAdvance x size).
+			// 0 = character not in the GFXfont: fallback monospace step
+			TFT_setCursor(cx + (w ? w : 6), cy);
 		}
 		#endif
 		break;
@@ -80,29 +65,29 @@ void fb_putc(uint8_t backend, char c)
 		case 3: // === USART2 ===
 		#if USE_UART2
 		{
-			if (c == '\n')
+			// "\n" -> "\r\n", an existing "\r\n" stays (no "\r\r\n")
+			static char prev = 0;
+			if (c == '\n' && prev != '\r')
 			{
-				usart2_write_string("\r\n");
+				usart2_write_char('\r');
 			}
-			else
-			{
-				usart2_write_char(static_cast< uint8_t>(c));
-			}
+			usart2_write_char(static_cast< uint8_t>(c));
+			prev = c;
 		}
 		#endif
 		break;
 
-		case 4: // === USART4 ===
-		#if USE_UART4
+		case 4: // === USART3 = EDBG virtual COM ===
+		#if USE_UART3
 		{
-			if (c == '\n')
+			// "\n" -> "\r\n", an existing "\r\n" stays (no "\r\r\n")
+			static char prev = 0;
+			if (c == '\n' && prev != '\r')
 			{
-				usart4_write_string("\r\n");
+				usart3_write_char('\r');
 			}
-			else
-			{
-				usart4_write_char(static_cast< uint8_t>(c));
-			}
+			usart3_write_char(static_cast< uint8_t>(c));
+			prev = c;
 		}
 		#endif
 		break;

@@ -10,6 +10,6 @@
 
 void app_run(void)
 {
-    app2();
+   
 }
 

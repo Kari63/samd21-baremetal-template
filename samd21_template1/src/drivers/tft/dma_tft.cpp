@@ -12,7 +12,7 @@
  * setup (TFT_setAddrWindow). Neither of them knows anything about this
  * module - the dependency only points this way.
  *
- * NOTE: no SERCOM3 interrupt (simpler). The DMAC ISR only reports that a
+ * NOTE: no SERCOM1 interrupt (simpler). The DMAC ISR only reports that a
  * chunk is done. TFT_fillScreen_DMA_busy() is a main-loop service that
  * starts the next chunk and releases CS after the last TXC.
  */
@@ -37,7 +37,7 @@ static volatile uint8_t tft_dma_chunk_complete = 0;
 
 static void dma_finish_if_tx_complete(void)
 {
-	if (tft_dma_waiting_for_txc && SERCOM3->SPI.INTFLAG.bit.TXC) {
+	if (tft_dma_waiting_for_txc && SERCOM1->SPI.INTFLAG.bit.TXC) {
 		SPI_endWrite();
 		tft_dma_waiting_for_txc = 0;
 		tft_dma_busy = 0;
@@ -84,9 +84,8 @@ static void dma_fill_rect_start(int16_t x, int16_t y, int16_t w, int16_t h, uint
 {
 	if (tft_dma_busy) return;
 
-	if ((x >= _width) || (y >= _height)) return;
-	if ((x + w - 1) < 0) return;
-	if ((y + h - 1) < 0) return;
+	if (x < 0) { w += x; x = 0; }
+	if (y < 0) { h += y; y = 0; }
 	if ((x + w) > _width)  w = _width  - x;
 	if ((y + h) > _height) h = _height - y;
 	if ((w <= 0) || (h <= 0)) return;

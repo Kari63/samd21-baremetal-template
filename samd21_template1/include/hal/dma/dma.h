@@ -13,6 +13,8 @@
 
 //#define BLOCK_SIZE  64  // 64-byte page/block - divisible by 4
 #define DMA_CHANNELS 12  // ch0 = EVSYS, ch1 = ADC, ch4-5 = SPI TX / RX-drain
+#define I2C_DMA_CHANNEL 6  // SERCOM0 I2C TX (LCD). Above any channel with linked
+                           // descriptors (ADC ping-pong): errata 1.7.2
 #define ADC_DMA_CHANNEL 1
 #define SPI_DMA_CHANNEL 4
 #define ADC_DMA_BUFFER_SAMPLES 16
@@ -67,5 +69,14 @@ void dmac_start_spi_transfer(const uint8_t *data, uint16_t len);
 typedef void (*dma_spi_complete_cb_t)(bool ok);
 void dma_spi_set_complete_callback(dma_spi_complete_cb_t cb);
 
+
+// --- I2C_DMA_CHANNEL: SERCOM0 I2C master TX (USE_I2C_DMA, LCD) ---
+// Starts one TX block to SERCOM0 DATA. The callback (DMAC_Handler, ISR
+// context) reports TCMPL (ok = true: the last byte is in DATA, the bus is
+// still busy with it) or TERR (ok = false).
+typedef void (*dma_i2c_complete_cb_t)(bool ok);
+void dma_i2c_set_complete_callback(dma_i2c_complete_cb_t cb);
+void dmac_start_i2c_transfer(const uint8_t *data, uint16_t len);
+void dmac_stop_i2c_transfer(void);
 
 void DMAC_Handler(void);

@@ -7,6 +7,12 @@
 #include "project_config.h"
 #include "core/systeminit.h"
 #include "lcdpcf8574.h"
+#if USE_BMP280
+#include "bmp280.h"
+#endif
+#if USE_DHT20
+#include "dht20.h"
+#endif
 
 void systeminit() {
 
@@ -30,6 +36,10 @@ sercom0_init();
 sercom2_init();
 #endif
 
+#if USE_UART3
+sercom3_init();      // console: EDBG virtual COM
+#endif
+
 #if USE_UART4
 sercom4_init();
 #endif
@@ -39,7 +49,7 @@ sercom5_init();
 #endif
 
 #if USE_TFT
-sercom3_init();
+sercom1_init();      // TFT SPI
 #endif
 
 #if USE_ADC
@@ -81,6 +91,13 @@ rtc_mode2_init();
  lcd_init(LCD_DISP_ON);
  lcd_led(1);
  lcd_clrscr();
+#endif
+
+#if USE_BMP280
+bmp280_init();      // false = not found: bmp280_read() then returns false
+#endif
+#if USE_DHT20
+dht20_init();       // state machine only, first step >= 100 ms after power-on
 #endif
 
 #if USE_TFT

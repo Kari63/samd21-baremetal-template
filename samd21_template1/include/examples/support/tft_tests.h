@@ -12,7 +12,10 @@
 
 #pragma once
 
+#include <stdbool.h>
+
 void app2(void);
 void aja_lopullinen_stressitesti(void);
 void aja_lopullinen_stressitesti_2(void);
+bool aja_tekstitesti(void);              /* one step per call, true = done (text + rotations) */
 void skooppi_gafi_test(void);

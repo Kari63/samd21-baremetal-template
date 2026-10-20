@@ -43,6 +43,71 @@ static volatile uint8_t adc_completed_buffer = 0;
 
 
 
+#if USE_I2C_DMA
+/* --- Channel I2C_DMA_CHANNEL: SERCOM0 I2C master TX (LCD) ---
+   One block, one byte per TX request (DATA empty after the address/byte ACK).
+   The SERCOM side (ADDR.LENEN + LEN, automatic STOP) is in i2c_0.cpp. */
+static dma_i2c_complete_cb_t s_i2c_complete_cb = NULL;
+
+static void dmac_i2c_callback(uint8_t channel, uint8_t flags)
+{
+	(void)channel;
+	if (s_i2c_complete_cb) {
+		s_i2c_complete_cb(!(flags & DMAC_CHINTFLAG_TERR));
+	}
+}
+
+void dma_i2c_set_complete_callback(dma_i2c_complete_cb_t cb)
+{
+	s_i2c_complete_cb = cb;
+}
+
+void dmac_start_i2c_transfer(const uint8_t *data, uint16_t len)
+{
+	uint32_t primask = __get_PRIMASK();
+	__disable_irq();
+
+	descriptor_section[I2C_DMA_CHANNEL].btctrl = DMAC_BTCTRL_VALID |
+		DMAC_BTCTRL_SRCINC |
+		DMAC_BTCTRL_BEATSIZE_BYTE |
+		DMAC_BTCTRL_BLOCKACT_INT;
+	descriptor_section[I2C_DMA_CHANNEL].btcnt    = len;
+	descriptor_section[I2C_DMA_CHANNEL].srcaddr  = (uint32_t)data + len;   // end address
+	descriptor_section[I2C_DMA_CHANNEL].dstaddr  = (uint32_t)&SERCOM0->I2CM.DATA.reg;
+	descriptor_section[I2C_DMA_CHANNEL].descaddr = 0;
+	__DMB();
+
+	DMAC->CHID.reg = DMAC_CHID_ID(I2C_DMA_CHANNEL);
+	DMAC->CHCTRLA.reg = 0;
+	while (DMAC->CHCTRLA.reg & DMAC_CHCTRLA_ENABLE) {
+	}
+	DMAC->CHINTENSET.reg = DMAC_CHINTENSET_TCMPL | DMAC_CHINTENSET_TERR;
+	DMAC->CHCTRLB.reg =
+		DMAC_CHCTRLB_LVL(0) |
+		DMAC_CHCTRLB_TRIGACT_BEAT |                 // one byte per TX request
+		DMAC_CHCTRLB_TRIGSRC(SERCOM0_DMAC_ID_TX);
+	DMAC->CHCTRLA.reg = DMAC_CHCTRLA_ENABLE;
+
+	__set_PRIMASK(primask);
+}
+
+/* Channel off and its flags cleared (end of transfer, error or timeout). */
+void dmac_stop_i2c_transfer(void)
+{
+	uint32_t primask = __get_PRIMASK();
+	__disable_irq();
+
+	DMAC->CHID.reg = DMAC_CHID_ID(I2C_DMA_CHANNEL);
+	DMAC->CHCTRLA.reg = 0;
+	while (DMAC->CHCTRLA.reg & DMAC_CHCTRLA_ENABLE) {
+	}
+	DMAC->CHINTFLAG.reg = DMAC_CHINTFLAG_TCMPL | DMAC_CHINTFLAG_TERR | DMAC_CHINTFLAG_SUSP;
+
+	__set_PRIMASK(primask);
+}
+#endif /* USE_I2C_DMA */
+
+
  void dmac_init(void)
 {
 	// Enable the DMAC bus clocks (AHB + APBB)
@@ -57,6 +122,9 @@ static volatile uint8_t adc_completed_buffer = 0;
 	DMAC->CTRL.reg = DMAC_CTRL_DMAENABLE | DMAC_CTRL_LVLEN(0xF);
 	dmac_set_channel_callback(ADC_DMA_CHANNEL, dmac_adc_callback);
 	dmac_set_channel_callback(SPI_DMA_CHANNEL, dmac_spi_callback);
+#if USE_I2C_DMA
+	dmac_set_channel_callback(I2C_DMA_CHANNEL, dmac_i2c_callback);
+#endif
 	NVIC_EnableIRQ(DMAC_IRQn);
 }
 
@@ -131,7 +199,7 @@ void dmac_arm_channel_spi_trigger(void)
 	DMAC->CHCTRLB.reg =
 	DMAC_CHCTRLB_LVL(0) |
 	DMAC_CHCTRLB_TRIGACT_BEAT |                 // one byte per DRE request
-	DMAC_CHCTRLB_TRIGSRC(SERCOM3_DMAC_ID_TX);   // TFT TX, direct peripheral trigger
+	DMAC_CHCTRLB_TRIGSRC(SERCOM1_DMAC_ID_TX);   // TFT TX, direct peripheral trigger
 
 	DMAC->CHCTRLA.reg = DMAC_CHCTRLA_ENABLE;
 }
@@ -144,7 +212,7 @@ void dmac_build_channel_color_block(const uint8_t *data, uint16_t len)
 	DMAC_BTCTRL_BLOCKACT_INT;
 	descriptor_section[SPI_DMA_CHANNEL].btcnt   = len;
 	descriptor_section[SPI_DMA_CHANNEL].srcaddr = (uint32_t)data + len;
-	descriptor_section[SPI_DMA_CHANNEL].dstaddr = (uint32_t)&SERCOM3->SPI.DATA.reg;
+	descriptor_section[SPI_DMA_CHANNEL].dstaddr = (uint32_t)&SERCOM1->SPI.DATA.reg;
 	descriptor_section[SPI_DMA_CHANNEL].descaddr = 0;
 }
 

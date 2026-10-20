@@ -23,8 +23,6 @@ typedef struct
 } RTC_Time_t;
 
 RTC_Time_t rtc_read_time(void);
-void RTC_Handler(void);
-void rtc_onSecond(void);
 void LCD_update(void);
 
 

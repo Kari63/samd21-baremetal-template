@@ -98,17 +98,18 @@ void usart2_write_int(int16_t v)
 {
 	char buf[8];
 	int pos = 0;
+	int32_t w = v;   // int32: -32768 negates without overflow
 
-	if (v < 0) {
+	if (w < 0) {
 		usart2_write_char('-');
-		v = -v;
+		w = -w;
 	}
 
 	// collect the digits in reverse
 	do {
-		buf[pos++] = '0' + (v % 10);
-		v /= 10;
-	} while (v > 0);
+		buf[pos++] = '0' + (w % 10);
+		w /= 10;
+	} while (w > 0);
 
 	// print them in the right order
 	while (pos--)

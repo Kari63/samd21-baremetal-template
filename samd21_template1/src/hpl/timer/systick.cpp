@@ -1,5 +1,9 @@
 #include "samd21.h"
 #include "systick.h"
+#include "project_config.h"
+#if USE_DHT20
+#include "dht20.h"
+#endif
 #include <stdbool.h>
 
 volatile uint32_t systick_ms_laskuri = 0;
@@ -7,7 +11,7 @@ volatile bool cmd_softirq = false;
 volatile bool lcd_softirq =false;
 volatile bool ac_softirq0 =false;
 
-volatile bool usart4_has_data = false;
+volatile bool usart3_has_data = false;
 
 
 
@@ -37,10 +41,13 @@ void delay_ms(uint32_t ms)
 void SysTick_Handler(void)
 {
 	systick_ms_laskuri++;
+#if USE_DHT20
+	dht20_tick();                       // countdown -> dht20_softirq
+#endif
 	
 	
 	
-	if (usart4_has_data) {
+	if (usart3_has_data) {
 	   cmd_softirq = true;
 	}
 	

@@ -16,6 +16,8 @@
  * the application calls it periodically to repair disturbances.
  *
  * Do not call these functions from an interrupt (polled I2C).
+ * USE_I2C_DMA: lcd_flush() sends in the background; the other functions
+ * that touch the bus first wait for it (polled I2C).
  */
 
 #pragma once
